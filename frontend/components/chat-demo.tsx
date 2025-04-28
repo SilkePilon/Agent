@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, FormEvent, ChangeEvent } from "react"
+import { useState, ChangeEvent } from "react"
 import { useChat } from "@/providers/ChatProvider"
 import { cn } from "@/lib/utils"
 import { Chat } from "@/components/ui/chat"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, CheckCircle2 } from "lucide-react"
+import { AlertCircle, CheckCircle2, TriangleAlert, X } from "lucide-react"
 
 import {
     Select,
@@ -36,9 +36,16 @@ export function ChatDemo() {
         sendMessage,
         resetChat: resetChatOriginal,
         generateEmailSummary: generateEmailSummaryOriginal,
-        toggleMode
-    } = useChat()
-    const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null)    // Show alert for 3 seconds then fade out
+        toggleMode } = useChat()
+    const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null)
+    const [showDisclaimer, setShowDisclaimer] = useState(true)
+
+    // Handle closing the disclaimer with animation
+    const closeDisclaimer = () => {
+        setShowDisclaimer(false)
+    }
+
+    // Show alert for 3 seconds then fade out
     const showAlert = (type: 'success' | 'error' | 'info', message: string) => {
         setAlert({ type, message })
         setTimeout(() => setAlert(null), 3000)
@@ -123,8 +130,7 @@ export function ChatDemo() {
                     </AlertDescription>
                 </Alert>
             </div>
-            )}
-            <div className={cn("flex", "justify-end", "mb-2", "gap-2")}>
+            )}            <div className={cn("flex", "justify-end", "mb-2", "gap-2")}>
                 <Select value={isProductionMode ? "production" : "test"} onValueChange={(value) => toggleMode()}>
                     <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Select Mode" />
@@ -138,7 +144,26 @@ export function ChatDemo() {
                     </SelectContent>
                 </Select>
                 <ModeToggle />
-            </div>
+            </div>            {/* AI Disclaimer */}
+            {showDisclaimer && (
+                <Alert className="mb-4 bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800 relative">
+                    <TriangleAlert color="#F59E0B" className="h-10 w-10 mr-3 text-amber-500 dark:text-amber-300 stroke-[2.5px] flex-shrink-0 my-auto" />
+                    <div className="flex-1">    
+                        <AlertTitle className="text-amber-700 dark:text-amber-300">AI Assistant Disclaimer</AlertTitle>
+                        <AlertDescription className="text-amber-600 dark:text-amber-400 text-sm">
+                            This AI assistant may make mistakes or provide inaccurate information. Please verify important information before making decisions.
+                        </AlertDescription>
+                    </div>
+                    <button
+                        onClick={closeDisclaimer}
+                        className="absolute right-3 top-3 p-1 rounded-md hover:bg-amber-200/50 dark:hover:bg-amber-700/50 transition-colors"
+                        aria-label="Close disclaimer"
+                    >
+                        <X className="h-5 w-5 text-amber-600 dark:text-amber-300" />
+                    </button>
+                </Alert>
+            )}
+
             <Chat
                 className="grow"
                 messages={messages}
