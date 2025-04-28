@@ -120,7 +120,6 @@ export interface Message {
   parts?: MessagePart[]
   projectIdea?: string
   toolsUsed?: string | string[]
-  toolUsed?: string | string[] // Add support for singular version
 }
 
 export interface ChatMessageProps extends Message {
@@ -141,7 +140,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   parts,
   projectIdea,
   toolsUsed,
-  toolUsed, // Add toolUsed to destructuring
 }) => {
   const files = useMemo(() => {
     return experimental_attachments?.map((attachment) => {
@@ -255,7 +253,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           ) : (
             <MarkdownRenderer>{content}</MarkdownRenderer>
           )}
-          {!isUser && projectIdea && projectIdea.toLocaleLowerCase() != "unknown" && (
+          {!isUser && projectIdea && projectIdea != "unknown" && (
             <>
               <Separator className="my-2" />
               <span className="inline-flex items-center rounded-md bg-blue-400/10 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-blue-400/30 ring-inset">
@@ -282,8 +280,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           </time>
         ) : null}
       </div>
-        {/* Display tools used if available (check both singular and plural properties) */}
-      {(toolsUsed && toolsUsed != "" && toolsUsed != "none") && <ToolsUsed toolsUsed={toolsUsed || toolUsed} />}
+      
+      {/* Display tools used if available */}
+      {toolsUsed && <ToolsUsed toolsUsed={toolsUsed} />}
     </>
   )
 }

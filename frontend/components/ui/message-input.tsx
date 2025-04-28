@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowUp, Info, Loader2, Mic, Paperclip, Square, X, RefreshCw } from "lucide-react"
+import { ArrowUp, Info, Loader2, Mic, Paperclip, Square, X, Trash2 } from "lucide-react"
 import { omit } from "remeda"
 
 import { cn } from "@/lib/utils"
@@ -268,7 +268,7 @@ export function MessageInput({
                   aria-label="Reset chat"
                   onClick={props.resetChat}
                 >
-                  <RefreshCw className="h-4 w-4 transition-transform hover:rotate-180" />
+                  <Trash2 className="h-4 w-4 transition-transform hover:rotate-180" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -348,7 +348,7 @@ export function MessageInput({
                   aria-label="Send message"
                   disabled={props.value === "" || isGenerating}
                 >
-                  <ArrowUp className="h-5 w-5" />
+                  <ArrowUp className="h-5 w-5 text-white" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>

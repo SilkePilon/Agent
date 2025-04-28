@@ -87,7 +87,6 @@ export function ChatDemo() {
     const stop = () => {
         // Optional: Implement if your API supports stopping generation
     }
-
     const append = (message: { role: "user"; content: string }) => {
         if (message.role === "user") {
             sendMessage(message.content)
@@ -95,7 +94,7 @@ export function ChatDemo() {
     }
 
     return (
-        <div className={cn("flex", "flex-col", "h-[500px]", "w-full", "relative")}>
+        <div className={cn("flex", "flex-col", "h-full", "w-full", "relative", "p-6")}>
             {alert && (<div className="absolute top-0 left-1/2 transform -translate-x-1/2 z-50 w-96 animate-in fade-in slide-in-from-top-2">
                 <Alert
                     variant={alert.type === 'error' ? 'destructive' : 'default'}

@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch"
 import { ChatDemo } from "@/components/chat-demo"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { useIsMobile } from "@/hooks/use-mobile"
 import {
   Select,
   SelectContent,
@@ -46,6 +47,7 @@ export default function Dashboard() {
     generateEmailSummary,
     toggleMode
   } = useChat()
+  const isMobile = useIsMobile()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -59,11 +61,8 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto p-4 min-h-screen bg-background overflow-x-hidden">
-      <main className="max-w-4xl mx-auto mt-8 rounded-3xl border shadow-lg">
-        <div className="p-6">
-          {/* <h1 className="text-2xl font-bold mb-6">Chat Assistant</h1> */}
-          <ChatDemo />
-        </div>
+      <main className={`max-w-7xl mx-auto ${isMobile ? 'h-[calc(100vh-7rem)]' : 'h-[calc(100vh-4rem)] mt-8'} rounded-3xl border shadow-lg flex flex-col`}>
+        <ChatDemo />
       </main>
     </div>
   )

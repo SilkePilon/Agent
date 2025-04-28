@@ -1,11 +1,12 @@
 "use client"
 
-import React, { createContext, useContext, useState, useCallback } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
 
 interface Message {
   role: 'user' | 'assistant'
   content: string
   projectIdea?: string
+  toolsUsed?: string | string[]
 }
 
 interface ChatContextType {
@@ -20,15 +21,52 @@ interface ChatContextType {
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined)
 
-const ChatProviderComponent = ({ children }: { children: React.ReactNode }) => {  const [messages, setMessages] = useState<Message[]>([])
+const ChatProviderComponent = ({ children }: { children: React.ReactNode }) => {  
+  const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [isProductionMode, setIsProductionMode] = useState(false)
+  const [isProductionMode, setIsProductionMode] = useState(true)
+  const [deviceId, setDeviceId] = useState<string>('')
+
+  // Generate a device fingerprint on component mount
+  useEffect(() => {
+    const generateDeviceId = () => {
+      // Check if we already have a deviceId in localStorage
+      const storedDeviceId = localStorage.getItem('deviceFingerprint');
+      if (storedDeviceId) {
+        return storedDeviceId;
+      }
+
+      // Generate a fingerprint based on browser properties
+      const fingerprint = [
+        navigator.userAgent,
+        navigator.language,
+        screen.colorDepth,
+        screen.width + 'x' + screen.height,
+        new Date().getTimezoneOffset(),
+        navigator.platform || 'unknown'
+      ].join('|');
+
+      // Create a hash from the fingerprint
+      let hash = 0;
+      for (let i = 0; i < fingerprint.length; i++) {
+        hash = ((hash << 5) - hash) + fingerprint.charCodeAt(i);
+        hash |= 0; // Convert to 32bit integer
+      }
+      
+      // Convert to hex string and pad with device- prefix
+      const newDeviceId = 'device-' + Math.abs(hash).toString(16);
+      
+      // Store for future use
+      localStorage.setItem('deviceFingerprint', newDeviceId);
+      
+      return newDeviceId;
+    };
+
+    setDeviceId(generateDeviceId());
+  }, []);
 
   const makeApiRequest = useCallback(async (body: any) => {
-    const sessionId = await fetch('https://api.ipify.org?format=json')
-      .then(res => res.json())
-      .then(data => data.ip)
-      .catch(() => 'anonymous');
+    const sessionId = deviceId || 'anonymous';
 
     const response = await fetch('/api/chat', {
       method: 'POST',
@@ -47,16 +85,19 @@ const ChatProviderComponent = ({ children }: { children: React.ReactNode }) => {
     }
     
     return response.json();
-  }, [isProductionMode]);
-
-  const sendMessage = useCallback(async (content: string) => {
+  }, [isProductionMode, deviceId]);  const sendMessage = useCallback(async (content: string) => {
     try {
       setIsLoading(true);
       setMessages(prev => [...prev, { role: 'user', content }]);      const data = await makeApiRequest({ prompt: content });
+      
+      // Handle different API response structures
+      const responseData = data.output || data;
+      
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: data.response,
-        projectIdea: data.projectIdea 
+        content: responseData.response,
+        projectIdea: responseData.projectIdea,
+        toolsUsed: responseData.toolsUsed || responseData.toolUsed // Handle both plural and singular versions
       }]);
     } catch (error) {
       setMessages(prev => [...prev, { 
@@ -83,11 +124,11 @@ const ChatProviderComponent = ({ children }: { children: React.ReactNode }) => {
       const cleanSubject = data.emailSubject ? 
         data.emailSubject.replace(/^Projectidee: /i, '') : 
         'Email Samenvatting';
-      
-      setMessages(prev => [...prev, { 
+        setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: data.emailHtml || "<html><body><p>Email summary generated successfully!</p></body></html>",
-        projectIdea: cleanSubject
+        projectIdea: cleanSubject,
+        toolsUsed: data.toolsUsed
       }]);
       
       return {
