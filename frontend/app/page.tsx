@@ -1,11 +1,12 @@
 "use client"
 
+import { Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { useChat } from "@/providers/ChatProvider"
 import { ChatDemo } from "@/components/chat-demo"
 import { useIsMobile } from "@/hooks/use-mobile"
 
-export default function Dashboard() {
+function DashboardContent() {
   const {
     messages,
     isLoading,
@@ -35,5 +36,13 @@ export default function Dashboard() {
         <ChatDemo />
       </main>
     </div>
+  )
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<div className="container mx-auto p-4 flex items-center justify-center h-screen">Loading...</div>}>
+      <DashboardContent />
+    </Suspense>
   )
 }
