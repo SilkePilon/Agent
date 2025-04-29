@@ -1,4 +1,5 @@
-import React, { Suspense } from "react"
+import * as React from "react"
+import { Suspense } from "react"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
@@ -184,8 +185,8 @@ const COMPONENTS = {
   hr: withClass("hr", "border-foreground/20"),
 }
 
-function withClass(Tag: keyof JSX.IntrinsicElements, classes: string) {
-  const Component = ({ node, ...props }: any) => (
+function withClass(Tag: keyof React.JSX.IntrinsicElements, classes: string) {
+  const Component = ({ node, ...props }: React.ComponentPropsWithRef<any>) => (
     <Tag className={classes} {...props} />
   )
   Component.displayName = String(Tag)
