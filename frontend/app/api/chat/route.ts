@@ -96,10 +96,11 @@ export async function POST(req: Request) {
         }),        execute: async ({ filename, content }) => {
           try {
             // In a real app, you'd want proper file system security
-            const filePath = join(process.cwd(), 'generated', filename);
+            const targetDirectory = join('/tmp', 'generated');
+            const filePath = join(targetDirectory, filename);
             
             // Ensure directory exists
-            await fs.mkdir(join(process.cwd(), 'generated'), { recursive: true });
+            await fs.mkdir(targetDirectory, { recursive: true });
             
             await fs.writeFile(filePath, content, 'utf-8');
             
