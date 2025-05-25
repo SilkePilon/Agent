@@ -205,14 +205,21 @@ export function MessageInput({
         onStopRecording={stopRecording}
       />
 
+      {/* Agent Mode Indicator - Top Middle */}
+      {props.mode === 'agent' && (
+        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-md shadow-sm">
+          <Bot className="h-3 w-3" />
+          <span className="font-medium">Agent Mode Active</span>
+        </div>
+      )}
+      {props.mode === 'chat' && (
+        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-1 bg-green-500 text-white text-xs rounded-md shadow-sm">
+          <MessageCircle strokeWidth={3} className="h-3 w-3" />
+          <span className="font-medium">Chat Mode Active</span>
+        </div>
+      )}
+
       <div className="relative flex w-full items-center space-x-2">
-        {/* Agent Mode Indicator */}
-        {props.mode === 'agent' && (
-          <div className="absolute -top-8 left-0 z-30 flex items-center gap-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-t-md">
-            <Bot className="h-3 w-3" />
-            <span className="font-medium">Agent Mode Active</span>
-          </div>
-        )}
         
         <div className="relative flex-1">
           <textarea
@@ -222,7 +229,10 @@ export function MessageInput({
             onPaste={onPaste}
             onKeyDown={onKeyDown}
             className={cn(
-              "z-10 w-full grow resize-none rounded-xl border border-input bg-background p-3 pr-24 text-sm ring-offset-background transition-[border] placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+              "z-10 w-full grow resize-none rounded-xl border-2 border-input bg-background p-3 pr-24 text-sm ring-offset-background transition-[border] placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+              props.mode === 'agent' 
+                ? "focus-visible:border-blue-500" 
+                : "focus-visible:border-primary",
               showFileList && "pb-16",
               className
             )}
@@ -325,7 +335,10 @@ export function MessageInput({
           <Button
             type="submit"
             size="icon"
-            className="h-8 w-8 transition-opacity"
+            className={cn(
+              "h-8 w-8 transition-opacity",
+              props.mode === 'agent' ? "bg-blue-500 hover:bg-blue-600 text-white" : ""
+            )}
             aria-label="Send message"
             disabled={props.value === "" || isGenerating}
           >

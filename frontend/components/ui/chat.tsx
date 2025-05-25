@@ -8,12 +8,12 @@ import {
   type ReactElement,
 } from "react"
 import { ArrowDown, ThumbsDown, ThumbsUp } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
 
 import { cn } from "@/lib/utils"
 import { useAutoScroll } from "@/hooks/use-auto-scroll"
 import { Button } from "@/components/ui/button"
 import { type Message } from "@/components/ui/chat-message"
+import { type MessagePart } from "@/components/ui/chat-message"
 import { CopyButton } from "@/components/ui/copy-button"
 import { MessageInput } from "@/components/ui/message-input"
 import { MessageList } from "@/components/ui/message-list"
@@ -34,7 +34,7 @@ interface ChatPropsBase {
     messageId: string,
     rating: "thumbs-up" | "thumbs-down"
   ) => void
-  setMessages?: (messages: any[]) => void
+  setMessages?: (messages: Message[]) => void
   transcribeAudio?: (blob: Blob) => Promise<string>
   mode?: 'agent' | 'chat'
   setMode?: (mode: 'agent' | 'chat') => void
@@ -126,7 +126,7 @@ export function Chat({
     }
 
     if (lastAssistantMessage.parts && lastAssistantMessage.parts.length > 0) {
-      const updatedParts = lastAssistantMessage.parts.map((part: any) => {
+      const updatedParts = lastAssistantMessage.parts.map((part: MessagePart) => {
         if (
           part.type === "tool-invocation" &&
           part.toolInvocation &&
@@ -137,7 +137,7 @@ export function Chat({
             ...part,
             toolInvocation: {
               ...part.toolInvocation,
-              state: "result",
+              state: "result" as const,
               result: {
                 content: "Tool execution was cancelled",
                 __cancelled: true,

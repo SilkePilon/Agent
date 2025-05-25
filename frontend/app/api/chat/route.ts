@@ -1,9 +1,8 @@
-import { openai } from '@ai-sdk/openai';
 import { google } from '@ai-sdk/google';
 import { streamText, tool } from 'ai';
 import { z } from 'zod';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { evaluate, mod } from 'mathjs';
+import { evaluate } from 'mathjs';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 
@@ -13,7 +12,7 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   const { messages, mode = 'agent', provider = 'openrouter', selectedModel = 'google/gemini-2.5-flash-preview-05-20:thinking' } = await req.json();
   const openrouter = createOpenRouter({
-    apiKey: '',
+    apiKey: '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',
   });
 
   // Select the appropriate model based on provider and selected model
@@ -94,8 +93,7 @@ export async function POST(req: Request) {
           filename: z.string().describe('Name of the file to create'),
           content: z.string().describe('Content to write to the file'),
           directory: z.string().optional().describe('Directory path (optional, defaults to current)')
-        }),
-        execute: async ({ filename, content, directory = '.' }) => {
+        }),        execute: async ({ filename, content }) => {
           try {
             // In a real app, you'd want proper file system security
             const filePath = join(process.cwd(), 'generated', filename);
@@ -214,7 +212,7 @@ function generatedFunction() {
           const temperature = Math.round(Math.random() * (90 - 32) + 32);
           const conditions = ['Sunny', 'Cloudy', 'Rainy', 'Partly Cloudy'][Math.floor(Math.random() * 4)];
           
-          const result: any = {
+          const result: { location: string; current: { temperature: number; condition: string; humidity: number; windSpeed: number }; forecast?: Array<{ day: number; temperature: number; condition: string }> } = {
             location,
             current: {
               temperature,

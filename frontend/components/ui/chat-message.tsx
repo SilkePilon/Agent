@@ -20,8 +20,13 @@ const chatBubbleVariants = cva(
   {
     variants: {
       isUser: {
-        true: "bg-primary text-primary-foreground",
+        true: "",
         false: "bg-muted text-foreground",
+      },
+      mode: {
+        agent: "",
+        chat: "",
+        undefined: "",
       },
       animation: {
         none: "",
@@ -31,6 +36,23 @@ const chatBubbleVariants = cva(
       },
     },
     compoundVariants: [
+      // User message styling based on mode
+      {
+        isUser: true,
+        mode: "agent",
+        class: "bg-blue-500 text-white",
+      },
+      {
+        isUser: true,
+        mode: "chat",
+        class: "bg-primary text-primary-foreground",
+      },
+      {
+        isUser: true,
+        mode: undefined,
+        class: "bg-primary text-primary-foreground",
+      },
+      // Animation variants
       {
         isUser: true,
         animation: "slide",
@@ -78,7 +100,7 @@ interface ToolResult {
   toolName: string
   result: {
     __cancelled?: boolean
-    [key: string]: any
+    [key: string]: unknown
   }
 }
 
@@ -104,7 +126,7 @@ interface SourcePart {
   type: "source"
 }
 
-type MessagePart = TextPart | ReasoningPart | ToolInvocationPart | SourcePart
+export type MessagePart = TextPart | ReasoningPart | ToolInvocationPart | SourcePart
 
 export interface Message {
   id: string
@@ -167,7 +189,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           </div>
         ) : null}
 
-        <div className={cn(chatBubbleVariants({ isUser, animation }))}>
+        <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
           <MarkdownRenderer>{content}</MarkdownRenderer>
         </div>
 
@@ -197,7 +219,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             )}
             key={`text-${index}`}
           >
-            <div className={cn(chatBubbleVariants({ isUser, animation }))}>
+            <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
               <MarkdownRenderer>{part.text}</MarkdownRenderer>
               {actions ? (
                 <div className="absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground opacity-0 transition-opacity group-hover/message:opacity-100">
@@ -242,7 +264,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   return (
     <div className={cn("flex flex-col", isUser ? "items-end" : "items-start")}>
-      <div className={cn(chatBubbleVariants({ isUser, animation }))}>
+      <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
         <MarkdownRenderer>{content}</MarkdownRenderer>
         {actions ? (
           <div className="absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground opacity-0 transition-opacity group-hover/message:opacity-100">
@@ -394,7 +416,7 @@ function ToolResult({
   append
 }: { 
   toolName: string; 
-  result: any;
+  result: unknown;
   mode?: 'agent' | 'chat';
   setMode?: (mode: 'agent' | 'chat') => void;
   append?: (message: { role: "user"; content: string }) => void;
@@ -402,7 +424,14 @@ function ToolResult({
   const [isExpanded, setIsExpanded] = useState(false)
 
   // Format different types of tool results
-  const formatResult = (data: any) => {
+  const formatResult = (data: unknown) => {
+    // Type guard function
+    const isObject = (value: unknown): value is Record<string, unknown> => {
+      return typeof value === 'object' && value !== null
+    }
+    
+    if (!isObject(data)) return null
+
     switch (toolName) {
       case 'calculate':
         return (
@@ -410,13 +439,13 @@ function ToolResult({
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Expression:</span>
               <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm">
-                {data.expression}
+                {String(data.expression || '')}
               </code>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Result:</span>
               <span className="text-lg font-semibold text-green-600 dark:text-green-400">
-                {data.result}
+                {String(data.result || '')}
               </span>
             </div>
           </div>
@@ -428,11 +457,11 @@ function ToolResult({
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">File:</span>
               <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm">
-                {data.filename}
+                {String(data.filename || '')}
               </code>
             </div>
             <div className="text-sm text-green-600 dark:text-green-400">
-              ✓ {data.message}
+              ✓ {String(data.message || 'File created successfully')}
             </div>
           </div>
         )
@@ -443,11 +472,11 @@ function ToolResult({
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Language:</span>
               <span className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded text-sm">
-                {data.language}
+                {String(data.language || '')}
               </span>
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              {data.description}
+              {String(data.description || '')}
             </div>
             <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
               <CollapsibleTrigger className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">
@@ -456,7 +485,7 @@ function ToolResult({
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <pre className="mt-2 overflow-x-auto bg-gray-900 text-gray-100 p-3 rounded text-xs">
-                  <code>{data.code}</code>
+                  <code>{String(data.code || '')}</code>
                 </pre>
               </CollapsibleContent>
             </Collapsible>
@@ -468,17 +497,17 @@ function ToolResult({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Task:</span>
-              <span className="text-sm">{data.task}</span>
+              <span className="text-sm">{String(data.task || '')}</span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-xs text-gray-500">Complexity: {data.complexity}</span>
-              <span className="text-xs text-gray-500">Est. Time: {data.estimatedTime}</span>
+              <span className="text-xs text-gray-500">Complexity: {String(data.complexity || '')}</span>
+              <span className="text-xs text-gray-500">Est. Time: {String(data.estimatedTime || '')}</span>
             </div>
             <div className="space-y-1">
               <span className="text-sm font-medium">Steps:</span>
               <ol className="list-decimal list-inside space-y-1 text-sm">
-                {data.steps.map((step: string, i: number) => (
-                  <li key={i} className="text-gray-700 dark:text-gray-300">{step}</li>
+                {Array.isArray(data.steps) && data.steps.map((step, i) => (
+                  <li key={i} className="text-gray-700 dark:text-gray-300">{String(step)}</li>
                 ))}
               </ol>
             </div>
@@ -490,15 +519,15 @@ function ToolResult({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Location:</span>
-              <span className="text-sm">{data.location}</span>
+              <span className="text-sm">{String(data.location || '')}</span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-lg font-semibold">{data.current.temperature}°F</span>
-              <span className="text-sm text-gray-600 dark:text-gray-400">{data.current.condition}</span>
+              <span className="text-lg font-semibold">{isObject(data.current) ? String(data.current.temperature) : ''}°F</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">{isObject(data.current) ? String(data.current.condition) : ''}</span>
             </div>
             <div className="flex gap-4 text-xs text-gray-500">
-              <span>Humidity: {data.current.humidity}%</span>
-              <span>Wind: {data.current.windSpeed} mph</span>
+              <span>Humidity: {isObject(data.current) ? String(data.current.humidity) : ''}%</span>
+              <span>Wind: {isObject(data.current) ? String(data.current.windSpeed) : ''} mph</span>
             </div>
           </div>
         )
@@ -511,13 +540,13 @@ function ToolResult({
               <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Agent Mode Recommended</span>
             </div>
             <div className="text-sm text-gray-700 dark:text-gray-300">
-              {data.reason}
+              {String(data.reason || '')}
             </div>
             <div className="space-y-2">
               <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Agent Mode capabilities that would help:</span>
               <ul className="list-disc list-inside space-y-1 text-xs text-gray-600 dark:text-gray-400">
-                {data.capabilities.map((capability: string, i: number) => (
-                  <li key={i}>{capability}</li>
+                {Array.isArray(data.capabilities) && data.capabilities.map((capability, i) => (
+                  <li key={i}>{String(capability)}</li>
                 ))}
               </ul>
             </div>
@@ -530,7 +559,7 @@ function ToolResult({
                     if (append && data.userRequest) {
                       // Small delay to let the mode change take effect
                       setTimeout(() => {
-                        append({ role: "user", content: data.userRequest })
+                        append({ role: "user", content: String(data.userRequest || '') })
                       }, 100)
                     }
                   }}

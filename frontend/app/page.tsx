@@ -4,8 +4,8 @@ import { useState, useCallback, useRef } from 'react';
 import { Bot, MessageCircle, Settings } from 'lucide-react';
 
 import { Chat } from "@/components/ui/chat"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { type Message } from "@/components/ui/chat-message"
 
 const agentSuggestions = [
   "Calculate the compound interest on $10,000 at 5% for 10 years",
@@ -80,7 +80,7 @@ export default function Home() {
   });
   
   // Enhanced handleSubmit
-  const enhancedHandleSubmit = useCallback((e?: any, options?: any) => {
+  const enhancedHandleSubmit = useCallback((e?: { preventDefault?: () => void }, options?: { experimental_attachments?: FileList }) => {
     // If we detected an error previously, this submission should use fallback
     if (retryAttemptRef.current) {
       console.log('Submitting with fallback flag set');
@@ -188,7 +188,7 @@ export default function Home() {
               </div>
             )}
             <Chat
-              messages={messages as any}
+              messages={messages as Message[]}
               input={input}
               handleInputChange={handleInputChange}
               handleSubmit={enhancedHandleSubmit}

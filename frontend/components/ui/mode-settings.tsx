@@ -154,28 +154,27 @@ function ModeSettingsContent({
           <h4 className="font-semibold text-lg">Conversation Mode</h4>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <motion.div 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">          <motion.div 
             className={cn(
               "relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 group overflow-hidden",
               mode === 'chat' 
-                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 shadow-lg shadow-blue-500/20" 
-                : "border-border hover:border-blue-300 hover:bg-muted/50"
+                ? "border-green-500 bg-green-50 dark:bg-green-950/30" 
+                : "border-border hover:border-green-300 hover:bg-muted/50"
             )}
             onClick={() => setMode?.('chat')}
             whileHover={{ scale: 1.02, y: -2 }}
             whileTap={{ scale: 0.98 }}
           >
             {/* Background gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             
             <div className="relative flex items-start gap-4">
               <motion.div 
                 className={cn(
                   "p-3 rounded-lg transition-all duration-300",
                   mode === 'chat' 
-                    ? "bg-blue-500 text-white shadow-lg shadow-blue-500/30" 
-                    : "bg-muted group-hover:bg-blue-100 group-hover:text-blue-600"
+                    ? "bg-green-500 text-white" 
+                    : "bg-muted group-hover:bg-green-100 group-hover:text-green-600"
                 )}
                 whileHover={{ rotate: 5 }}
               >
@@ -192,7 +191,7 @@ function ModeSettingsContent({
                         exit={{ scale: 0, opacity: 0 }}
                         transition={{ type: "spring", stiffness: 500, damping: 30 }}
                       >
-                        <Badge variant="default" className="text-xs bg-blue-500">
+                        <Badge variant="default" className="text-xs bg-green-500">
                           Active
                         </Badge>
                       </motion.div>
@@ -209,28 +208,27 @@ function ModeSettingsContent({
               </div>
             </div>
           </motion.div>
-          
-          <motion.div 
+            <motion.div 
             className={cn(
               "relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 group overflow-hidden",
               mode === 'agent' 
-                ? "border-purple-500 bg-purple-50 dark:bg-purple-950/30 shadow-lg shadow-purple-500/20" 
-                : "border-border hover:border-purple-300 hover:bg-muted/50"
+                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30" 
+                : "border-border hover:border-blue-300 hover:bg-muted/50"
             )}
             onClick={() => setMode?.('agent')}
             whileHover={{ scale: 1.02, y: -2 }}
             whileTap={{ scale: 0.98 }}
           >
             {/* Background gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             
             <div className="relative flex items-start gap-4">
               <motion.div 
                 className={cn(
                   "p-3 rounded-lg transition-all duration-300",
                   mode === 'agent' 
-                    ? "bg-purple-500 text-white shadow-lg shadow-purple-500/30" 
-                    : "bg-muted group-hover:bg-purple-100 group-hover:text-purple-600"
+                    ? "bg-blue-500 text-white" 
+                    : "bg-muted group-hover:bg-blue-100 group-hover:text-blue-600"
                 )}
                 whileHover={{ rotate: -5 }}
               >
@@ -247,7 +245,7 @@ function ModeSettingsContent({
                         exit={{ scale: 0, opacity: 0 }}
                         transition={{ type: "spring", stiffness: 500, damping: 30 }}
                       >
-                        <Badge variant="default" className="text-xs bg-purple-500">
+                        <Badge variant="default" className="text-xs bg-blue-500">
                           Active
                         </Badge>
                       </motion.div>
@@ -258,8 +256,8 @@ function ModeSettingsContent({
                   Advanced AI with tools for calculations, code generation, file management, and complex multi-step tasks.
                 </p>
                 <div className="flex items-center gap-2 mt-3">
-                  <Brain className="h-4 w-4 text-purple-500" />
-                  <span className="text-xs text-purple-600 font-medium">Advanced capabilities</span>
+                  <Brain className="h-4 w-4 text-blue-500" />
+                  <span className="text-xs text-blue-600 font-medium">Advanced capabilities</span>
                 </div>
               </div>
             </div>
@@ -282,7 +280,7 @@ function ModeSettingsContent({
             className={cn(
               "relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 group overflow-hidden",
               provider === 'google' 
-                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 shadow-lg shadow-emerald-500/20" 
+                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30" 
                 : "border-border hover:border-emerald-300 hover:bg-muted/50"
             )}
             onClick={() => {
@@ -326,7 +324,7 @@ function ModeSettingsContent({
             className={cn(
               "relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 group overflow-hidden",
               provider === 'openrouter' 
-                ? "border-orange-500 bg-orange-50 dark:bg-orange-950/30 shadow-lg shadow-orange-500/20" 
+                ? "border-orange-500 bg-orange-50 dark:bg-orange-950/30" 
                 : "border-border hover:border-orange-300 hover:bg-muted/50"
             )}
             onClick={() => setProvider?.('openrouter')}
@@ -432,7 +430,7 @@ function ModeSettingsContent({
                         className={cn(
                           "p-3 rounded-lg cursor-pointer transition-all duration-200 border",
                           selectedModel === model.id 
-                            ? "bg-blue-50 dark:bg-blue-950/50 border-blue-500 shadow-md shadow-blue-500/20" 
+                            ? "bg-blue-50 dark:bg-blue-950/50 border-blue-500" 
                             : "hover:bg-muted/50 border-transparent hover:border-muted-foreground/20"
                         )}
                         onClick={() => setSelectedModel?.(model.id)}
