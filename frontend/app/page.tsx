@@ -90,17 +90,34 @@ export default function Home() {
       if (mode === 'agent' && message.role === 'assistant') {
         // Attempt to find a generateCode tool invocation
         const toolInvocationPart = message.parts?.find(
-          part => part.type === 'tool-invocation' && part.toolInvocation?.toolName === 'generateCode'
+          part => part.type === 'tool-invocation' && 
+                  part.toolInvocation?.toolName === 'generateCode'
         );
+
         if (toolInvocationPart && toolInvocationPart.type === 'tool-invocation') {
-          const result = toolInvocationPart.toolInvocation.result as { code?: string; language?: string; [key: string]: any };
-          if (result?.code && result?.language) {
-            setActiveCodeDetail({
-              code: result.code,
-              language: result.language,
-              title: `Generated Code: ${result.language}`
-            });
-            return; // Found code via tool, exit
+          const invocation = toolInvocationPart.toolInvocation;
+          // Check if the invocation is in the 'result' state
+          if (invocation.state === 'result') {
+            // Now it's safe to access 'result'. Cast to access specific fields.
+            const toolResultData = invocation.result as { code?: string; language?: string; description?: string; [key: string]: any };
+
+            // --- BEGIN ADDED LOGGING ---
+            if (invocation.toolName === 'generateCode') {
+              console.log("generateCode Tool Result Data:", JSON.stringify(toolResultData, null, 2));
+              console.log("Extracted Language:", toolResultData?.language);
+              console.log("Extracted Code (raw):", toolResultData?.code);
+              console.log("Extracted Description:", toolResultData?.description);
+            }
+            // --- END ADDED LOGGING ---
+
+            if (toolResultData?.code && toolResultData?.language) {
+              setActiveCodeDetail({
+                code: toolResultData.code, // This should be the pure code
+                language: toolResultData.language,
+                title: toolResultData.description || `Generated Code: ${toolResultData.language}`
+              });
+              return; 
+            }
           }
         }
 
