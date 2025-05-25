@@ -155,7 +155,7 @@ function childrenTakeAllStringContents(element: any): string {
   }
 
   if (element?.props?.children) {
-    let children = element.props.children
+    const children = element.props.children
 
     if (Array.isArray(children)) {
       return children
@@ -176,7 +176,7 @@ const COMPONENTS = {
   h4: withClass("h4", "font-semibold text-base"),
   h5: withClass("h5", "font-medium"),
   strong: withClass("strong", "font-semibold"),
-  a: ({ href, children, ...props }: any) => (
+  a: ({ href, children, ...props }: { href?: string; children?: React.ReactNode } & React.HTMLProps<HTMLAnchorElement>) => (
     <a 
       href={href} 
       className="text-primary underline underline-offset-2" 
@@ -188,7 +188,7 @@ const COMPONENTS = {
     </a>
   ),
   blockquote: withClass("blockquote", "border-l-2 border-primary pl-4"),
-  code: ({ children, className, node, ...rest }: any) => {
+  code: ({ children, className, ...rest }: { children?: React.ReactNode; className?: string } & React.HTMLProps<HTMLElement>) => {
     const match = /language-(\w+)/.exec(className || "")
     return match ? (
       <CodeBlock className={className} language={match[1]} {...rest}>
@@ -205,7 +205,7 @@ const COMPONENTS = {
       </code>
     )
   },
-  pre: ({ children }: any) => children,
+  pre: ({ children }: { children?: React.ReactNode }) => children,
   ol: withClass("ol", "list-decimal space-y-2 pl-6"),
   ul: withClass("ul", "list-disc space-y-2 pl-6"),
   li: withClass("li", "my-1.5"),
@@ -227,7 +227,7 @@ const COMPONENTS = {
 }
 
 function withClass<T extends keyof React.JSX.IntrinsicElements>(tag: T, classes: string) {
-  const Component = ({ node, ...props }: any) => 
+  const Component = ({ ...props }: React.ComponentPropsWithoutRef<T>) => 
     React.createElement(tag as string, { className: classes, ...props })
   
   Component.displayName = String(tag)

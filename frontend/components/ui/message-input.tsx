@@ -2,14 +2,13 @@
 
 import React, { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowUp, Info, Loader2, Mic, Paperclip, Square, X, Bot, MessageCircle, Settings, ChevronDown, Search } from "lucide-react"
+import { ArrowUp, Info, Loader2, Mic, Paperclip, Square, Bot, MessageCircle, Settings } from "lucide-react"
 import { omit } from "remeda"
 
 import { cn } from "@/lib/utils"
 import { useAudioRecording } from "@/hooks/use-audio-recording"
 import { useAutosizeTextArea } from "@/hooks/use-autosize-textarea"
 import { AudioVisualizer } from "@/components/ui/audio-visualizer"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { FilePreview } from "@/components/ui/file-preview"
 import { InterruptPrompt } from "@/components/ui/interrupt-prompt"
@@ -70,7 +69,7 @@ export function MessageInput({
   } = useAudioRecording({
     transcribeAudio,
     onTranscriptionComplete: (text) => {
-      props.onChange?.({ target: { value: text } } as any)
+      props.onChange?.({ target: { value: text } } as React.ChangeEvent<HTMLTextAreaElement>)
     },
   })
 
