@@ -6,6 +6,12 @@ import { Bot, MessageCircle, Settings } from 'lucide-react';
 import { Chat } from "@/components/ui/chat"
 import { Badge } from "@/components/ui/badge"
 import { type Message } from "@/components/ui/chat-message"
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable"
+import { CodeDisplayCard } from '@/components/ui/code-display-card';
 
 const agentSuggestions = [
   "Calculate the compound interest on $10,000 at 5% for 10 years",
@@ -25,6 +31,9 @@ export default function Home() {
   const [provider, setProvider] = useState<'openrouter' | 'google'>('openrouter');
   const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash-preview-05-20:thinking');
   const retryAttemptRef = useRef(false);
+  const [activeCodeDetail, setActiveCodeDetail] = useState<{ code: string; language: string; title?: string } | null>(null);
+
+  const handleCloseCodeCard = () => setActiveCodeDetail(null);
   
   // Custom error handler for the chat
   const handleChatError = useCallback(async (error: Error) => {
@@ -76,7 +85,42 @@ export default function Home() {
         setFallbackActive(false);
         retryAttemptRef.current = false;
       }
-    }
+    },
+    onFinish: (message) => {
+      if (mode === 'agent' && message.role === 'assistant') {
+        // Attempt to find a generateCode tool invocation
+        const toolInvocationPart = message.parts?.find(
+          part => part.type === 'tool-invocation' && part.toolInvocation?.toolName === 'generateCode'
+        );
+        if (toolInvocationPart && toolInvocationPart.type === 'tool-invocation') {
+          const result = toolInvocationPart.toolInvocation.result as { code?: string; language?: string; [key: string]: any };
+          if (result?.code && result?.language) {
+            setActiveCodeDetail({
+              code: result.code,
+              language: result.language,
+              title: `Generated Code: ${result.language}`
+            });
+            return; // Found code via tool, exit
+          }
+        }
+
+        // Fallback: Check if the message content itself is primarily a code block
+        const content = message.content.trim();
+        const codeBlockMatch = content.match(/^```(\w+)?\s*([\s\S]*?)^```$/m);
+        if (codeBlockMatch) {
+          const language = codeBlockMatch[1] || 'plaintext'; // Default to plaintext if no language specified
+          const code = codeBlockMatch[2].trim();
+          if (code) { // Ensure there's actual code content
+            setActiveCodeDetail({
+              code: code,
+              language: language,
+              title: `Code Block: ${language}`
+            });
+            return; // Found code via markdown, exit
+          }
+        }
+      }
+    },
   });
   
   // Enhanced handleSubmit
@@ -174,37 +218,92 @@ export default function Home() {
           )}
 
           {/* Chat Interface */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border min-h-[600px]">
-            {fallbackActive && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                    {provider === 'google' 
-                      ? '⚡ Switched to Google Gemini due to OpenRouter issues' 
-                      : '⚡ Switching to backup provider...'}
-                  </p>
+          {mode === 'agent' && activeCodeDetail ? (
+            <ResizablePanelGroup 
+              direction="horizontal" 
+              className="w-full h-[600px] border rounded-lg shadow-lg"
+            >
+              <ResizablePanel defaultSize={50}>
+                <div className="flex flex-col h-full">
+                  {fallbackActive && (
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          {provider === 'google' 
+                            ? '⚡ Switched to Google Gemini due to OpenRouter issues' 
+                            : '⚡ Switching to backup provider...'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  <Chat
+                    messages={messages as Message[]}
+                    input={input}
+                    handleInputChange={handleInputChange}
+                    handleSubmit={enhancedHandleSubmit}
+                    isGenerating={isLoading}
+                    stop={stop}
+                    append={append}
+                    suggestions={currentSuggestions}
+                    className="flex-grow p-4" // Use flex-grow to fill panel
+                    mode={mode}
+                    setMode={setMode}
+                    provider={provider}
+                    setProvider={setProvider}
+                    selectedModel={selectedModel}
+                    setSelectedModel={setSelectedModel}
+                  />
                 </div>
-              </div>
-            )}
-            <Chat
-              messages={messages as Message[]}
-              input={input}
-              handleInputChange={handleInputChange}
-              handleSubmit={enhancedHandleSubmit}
-              isGenerating={isLoading}
-              stop={stop}
-              append={append}
-              suggestions={currentSuggestions}
-              className="h-[600px] p-4"
-              mode={mode}
-              setMode={setMode}
-              provider={provider}
-              setProvider={setProvider}
-              selectedModel={selectedModel}
-              setSelectedModel={setSelectedModel}
-            />
-          </div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={50}>
+                <div className="flex flex-col h-full">
+                  {/* The CodeDisplayCard will fill this panel */}
+                  {activeCodeDetail && (
+                    <CodeDisplayCard
+                      code={activeCodeDetail.code}
+                      language={activeCodeDetail.language}
+                      title={activeCodeDetail.title}
+                      onClose={handleCloseCodeCard}
+                    />
+                  )}
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border min-h-[600px]">
+              {fallbackActive && (
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      {provider === 'google' 
+                        ? '⚡ Switched to Google Gemini due to OpenRouter issues' 
+                        : '⚡ Switching to backup provider...'}
+                    </p>
+                  </div>
+                </div>
+              )}
+              <Chat
+                messages={messages as Message[]}
+                input={input}
+                handleInputChange={handleInputChange}
+                handleSubmit={enhancedHandleSubmit}
+                isGenerating={isLoading}
+                stop={stop}
+                append={append}
+                suggestions={currentSuggestions}
+                className="h-[600px] p-4"
+                mode={mode}
+                setMode={setMode}
+                provider={provider}
+                setProvider={setProvider}
+                selectedModel={selectedModel}
+                setSelectedModel={setSelectedModel}
+              />
+            </div>
+          )}
 
           {/* Footer */}
           <div className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
