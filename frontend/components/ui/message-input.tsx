@@ -57,6 +57,7 @@ export function MessageInput({
 }: MessageInputProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [showInterruptPrompt, setShowInterruptPrompt] = useState(false)
+  const [enableWebBrowsing, setEnableWebBrowsing] = useState(false)
 
   const {
     isListening,
@@ -280,6 +281,8 @@ export function MessageInput({
             setProvider={props.setProvider}
             selectedModel={props.selectedModel}
             setSelectedModel={props.setSelectedModel}
+            enableWebBrowsing={enableWebBrowsing}
+            setEnableWebBrowsing={setEnableWebBrowsing}
           >
             <Button
               type="button"

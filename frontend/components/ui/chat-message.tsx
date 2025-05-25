@@ -466,32 +466,6 @@ function ToolResult({
           </div>
         )
       
-      case 'generateCode':
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Language:</span>
-              <span className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded text-sm">
-                {String(data.language || '')}
-              </span>
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              {String(data.description || '')}
-            </div>
-            <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-              <CollapsibleTrigger className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                <ChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                View generated code
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <pre className="mt-2 overflow-x-auto bg-gray-900 text-gray-100 p-3 rounded text-xs">
-                  <code>{String(data.code || '')}</code>
-                </pre>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )
-      
       case 'createTaskPlan':
         return (
           <div className="space-y-2">

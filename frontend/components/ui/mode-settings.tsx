@@ -20,6 +20,8 @@ interface ModeSettingsProps {
   setProvider?: (provider: 'openrouter' | 'google') => void
   selectedModel?: string
   setSelectedModel?: (model: string) => void
+  enableWebBrowsing?: boolean;
+  setEnableWebBrowsing?: (enabled: boolean) => void;
   children: React.ReactNode
 }
 
@@ -30,6 +32,8 @@ export function ModeSettings({
   setProvider,
   selectedModel,
   setSelectedModel,
+  enableWebBrowsing,
+  setEnableWebBrowsing,
   children,
 }: ModeSettingsProps) {
   const isMobile = useIsMobile()
@@ -58,6 +62,8 @@ export function ModeSettings({
               setProvider={setProvider}
               selectedModel={selectedModel}
               setSelectedModel={setSelectedModel}
+              enableWebBrowsing={enableWebBrowsing}
+              setEnableWebBrowsing={setEnableWebBrowsing}
             />
           </div>
         </DrawerContent>
@@ -86,6 +92,8 @@ export function ModeSettings({
           setProvider={setProvider}
           selectedModel={selectedModel}
           setSelectedModel={setSelectedModel}
+          enableWebBrowsing={enableWebBrowsing}
+          setEnableWebBrowsing={setEnableWebBrowsing}
         />
       </DialogContent>
     </Dialog>
@@ -99,6 +107,8 @@ interface ModeSettingsContentProps {
   setProvider?: (provider: 'openrouter' | 'google') => void
   selectedModel?: string
   setSelectedModel?: (model: string) => void
+  enableWebBrowsing?: boolean;
+  setEnableWebBrowsing?: (enabled: boolean) => void;
 }
 
 function ModeSettingsContent({
@@ -108,6 +118,8 @@ function ModeSettingsContent({
   setProvider,
   selectedModel,
   setSelectedModel,
+  enableWebBrowsing,
+  setEnableWebBrowsing,
 }: ModeSettingsContentProps) {
   const [availableModels, setAvailableModels] = React.useState<ModelOption[]>([])
   const [modelSearchQuery, setModelSearchQuery] = React.useState("")
@@ -511,6 +523,91 @@ function ModeSettingsContent({
             }
           </p>
         </motion.div>
+      </motion.div>
+
+      {/* Tool Settings */}
+      <motion.div
+        className="space-y-6 border-t pt-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-1 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full" />
+          <h4 className="font-semibold text-lg">Tool Settings</h4>
+        </div>
+
+        <div className="flex items-center justify-between p-4 rounded-xl border bg-muted/30">
+          <div>
+            <label htmlFor="enableWebBrowsing" className="font-medium text-sm cursor-pointer">
+              Enable Web Browsing
+            </label>
+            <p className="text-xs text-muted-foreground">
+              Allows the AI to search the web for real-time information.
+            </p>
+          </div>
+          <button
+            id="enableWebBrowsing"
+            role="switch"
+            aria-checked={enableWebBrowsing}
+            disabled={mode !== 'agent'}
+            onClick={() => setEnableWebBrowsing?.(!(enableWebBrowsing ?? false))}
+            className={cn(
+              "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+              enableWebBrowsing && mode === 'agent' ? "bg-purple-600" : "bg-gray-300 dark:bg-gray-700",
+              mode !== 'agent' ? "cursor-not-allowed opacity-50" : ""
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className={cn(
+                "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                enableWebBrowsing && mode === 'agent' ? "translate-x-5" : "translate-x-0"
+              )}
+            />
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground px-4 text-center">
+          Note: Web browsing requires the administrator to configure a search API key (e.g., Google Custom Search or Serper API) on the server.
+        </p>
+        {mode !== 'agent' && (
+          <p className="text-xs text-muted-foreground text-center px-4 pt-1">
+            Web browsing can only be enabled in Agent Mode.
+          </p>
+        )}
+      </motion.div>
+
+      {/* Git Integrations */}
+      <motion.div
+        className="space-y-6 border-t pt-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.3 }}
+      >
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-1 bg-gradient-to-b from-gray-500 to-gray-700 rounded-full" />
+          <h4 className="font-semibold text-lg">Git Integrations</h4>
+        </div>
+
+        <div>
+          <h5 className="font-medium text-sm mb-2 text-muted-foreground">Link Accounts</h5>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Button variant="outline" disabled className="w-full justify-start text-left">
+              {/* Replace with actual GitHub icon when available */}
+              <span className="mr-2">📄</span> Link GitHub Account
+            </Button>
+            <Button variant="outline" disabled className="w-full justify-start text-left">
+              {/* Replace with actual GitLab icon when available */}
+              <span className="mr-2">📄</span> Link GitLab Account
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3 text-center">
+            GitHub/GitLab integration for code reviews and repository Q&A is coming soon.
+          </p>
+          <p className="text-xs text-muted-foreground mt-3 text-center px-4">
+            Note: Git integration features require the administrator to configure the respective API keys (GITHUB_API_KEY, GITLAB_API_KEY) on the server.
+          </p>
+        </div>
       </motion.div>
     </div>
   )

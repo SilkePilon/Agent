@@ -6,11 +6,36 @@ import { evaluate } from 'mathjs';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 
+const GITHUB_API_KEY = process.env.GITHUB_API_KEY;
+const GITLAB_API_KEY = process.env.GITLAB_API_KEY;
+
+// Helper function to check GitHub authentication status
+function checkGitHubAuth() {
+  if (GITHUB_API_KEY) {
+    console.log("GitHub API key is configured.");
+    return { authenticated: true, service: 'GitHub', apiKey: GITHUB_API_KEY };
+  } else {
+    console.log("GitHub API key is missing.");
+    return { authenticated: false, service: 'GitHub', message: 'GitHub API key not configured on the server.' };
+  }
+}
+
+// Helper function to check GitLab authentication status
+function checkGitLabAuth() {
+  if (GITLAB_API_KEY) {
+    console.log("GitLab API key is configured.");
+    return { authenticated: true, service: 'GitLab', apiKey: GITLAB_API_KEY };
+  } else {
+    console.log("GitLab API key is missing.");
+    return { authenticated: false, service: 'GitLab', message: 'GitLab API key not configured on the server.' };
+  }
+}
+
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { messages, mode = 'agent', provider = 'openrouter', selectedModel = 'google/gemini-2.5-flash-preview-05-20:thinking' } = await req.json();
+  const { messages, mode = 'agent', provider = 'openrouter', selectedModel = 'google/gemini-2.5-flash-preview-05-20:thinking', enableWebBrowsing = false } = await req.json();
   const openrouter = createOpenRouter({
     apiKey: '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',
   });
@@ -32,10 +57,7 @@ export async function POST(req: Request) {
 
   // Agent mode with tools and multi-step reasoning
   if (mode === 'agent') {
-    const result = streamText({
-      ...baseConfig,
-      maxSteps: 10, // Enable multi-step agent behavior
-      tools: {
+    const agentTools: Record<string, any> = {
       // Mathematical calculations
       calculate: tool({
         description: 'Perform mathematical calculations and evaluations. Supports complex expressions, unit conversions, and mathematical functions.',
@@ -59,33 +81,6 @@ export async function POST(req: Request) {
           }
         },
       }),
-
-      // Web search simulation (in a real app, you'd use a real search API)
-      webSearch: tool({
-        description: 'Search the web for current information, news, or research topics.',
-        parameters: z.object({
-          query: z.string().describe('Search query'),
-          type: z.enum(['general', 'news', 'academic', 'images']).optional().describe('Type of search')
-        }),
-        execute: async ({ query, type = 'general' }) => {
-          // Simulate web search results
-          const mockResults = [
-            {
-              title: `Search results for: ${query}`,
-              snippet: `This is a simulated search result for "${query}". In a real implementation, this would connect to a search API.`,
-              url: `https://example.com/search?q=${encodeURIComponent(query)}`,
-              type: type
-            }
-          ];
-          return {
-            query,
-            type,
-            results: mockResults,
-            resultCount: mockResults.length
-          };
-        },
-      }),
-
       // File operations
       createFile: tool({
         description: 'Create a new file with specified content. Useful for generating code, documents, or saving data.',
@@ -93,7 +88,8 @@ export async function POST(req: Request) {
           filename: z.string().describe('Name of the file to create'),
           content: z.string().describe('Content to write to the file'),
           directory: z.string().optional().describe('Directory path (optional, defaults to current)')
-        }),        execute: async ({ filename, content }) => {
+        }),
+        execute: async ({ filename, content }) => {
           try {
             // In a real app, you'd want proper file system security
             const filePath = join(process.cwd(), 'generated', filename);
@@ -119,37 +115,6 @@ export async function POST(req: Request) {
           }
         },
       }),
-
-      // Code generation and analysis
-      generateCode: tool({
-        description: 'Generate code in various programming languages based on specifications.',
-        parameters: z.object({
-          language: z.string().describe('Programming language (e.g., typescript, python, javascript)'),
-          description: z.string().describe('Description of what the code should do'),
-          framework: z.string().optional().describe('Framework or library to use (optional)')
-        }),
-        execute: async ({ language, description, framework }) => {
-          // This would typically use a specialized code generation model
-          const codeTemplate = `// Generated ${language} code for: ${description}
-${framework ? `// Using framework: ${framework}` : ''}
-
-// TODO: Implement the functionality described as: ${description}
-function generatedFunction() {
-  // Implementation goes here
-  console.log("This is generated ${language} code");
-}`;
-
-          return {
-            language,
-            description,
-            framework,
-            code: codeTemplate,
-            filename: `generated_${Date.now()}.${language === 'typescript' ? 'ts' : language === 'python' ? 'py' : 'js'}`,
-            success: true
-          };
-        },
-      }),
-
       // Task planning and management
       createTaskPlan: tool({
         description: 'Break down complex tasks into manageable steps and create an execution plan.',
@@ -298,30 +263,246 @@ I am pleased to present this proposal for your review...`
             autoSwitchRecommended: true
           };
         },
+      }),
+      getCodeReview: tool({
+        description: "Fetches the code changes (diff) from a GitHub pull request URL for the AI to review. GitLab is not yet supported.",
+        parameters: z.object({
+          url: z.string().describe('The URL of the pull request or merge request'),
+          repository: z.string().optional().describe('Optional: Name of the repository if not inferable from URL')
+        }),
+        execute: async ({ url, repository }) => {
+          const githubPrPattern = /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/pull\/(\d+)\/?$/;
+          const githubMatch = url.match(githubPrPattern);
+
+          if (githubMatch) {
+            const owner = githubMatch[1];
+            const repo = githubMatch[2];
+            const pull_number = githubMatch[3];
+
+            const authStatus = checkGitHubAuth();
+            if (!authStatus.authenticated || !authStatus.apiKey) {
+              return { error: true, message: authStatus.message || 'GitHub API key not configured or missing.', service: 'GitHub' };
+            }
+
+            const apiUrl = `https://api.github.com/repos/${owner}/${repo}/pulls/${pull_number}`;
+            const headers = {
+              'Accept': 'application/vnd.github.v3.diff',
+              'Authorization': `Bearer ${authStatus.apiKey}`,
+              'X-GitHub-Api-Version': '2022-11-28'
+            };
+
+            try {
+              const response = await fetch(apiUrl, { headers });
+              if (!response.ok) {
+                let errorDetail = response.statusText;
+                try {
+                  const errorJson = await response.json();
+                  errorDetail = errorJson.message || errorDetail;
+                } catch (e) {
+                  // Ignore if response is not JSON
+                }
+                return { error: true, message: `Failed to fetch PR diff from GitHub: ${errorDetail}`, details: await response.text(), service: 'GitHub' };
+              }
+
+              const diffContent = await response.text();
+              const maxDiffLength = 5000; // Characters
+              let diffSnippet = diffContent;
+              if (diffContent.length > maxDiffLength) {
+                diffSnippet = diffContent.substring(0, maxDiffLength) + '\n... [diff truncated] ...';
+              }
+
+              return {
+                status: 'success',
+                message: `Successfully fetched diff for GitHub PR: ${url}. Diff content below is ready for AI review.`,
+                service: 'GitHub',
+                owner,
+                repo,
+                pull_number,
+                diff: diffSnippet,
+                fullDiffLength: diffContent.length
+              };
+
+            } catch (error) {
+              return { error: true, message: `Error fetching GitHub PR diff: ${error instanceof Error ? error.message : String(error)}`, service: 'GitHub' };
+            }
+
+          } else if (url.includes('gitlab.com')) {
+            // Check GitLab auth even if functionality is pending, for consistency
+            const authStatus = checkGitLabAuth();
+            return { 
+              status: 'pending', 
+              message: 'GitLab code review is not yet implemented. Only GitHub is supported in this version.', 
+              service: 'GitLab',
+              authentication: authStatus // Include auth status for GitLab as well
+            };
+          } else {
+            return { error: true, message: 'Unsupported URL. Please provide a GitHub PR URL (e.g., https://github.com/owner/repo/pull/number).' };
+          }
+        }
+      }),
+      answerRepoQuestion: tool({
+        description: "Answers questions about a GitHub repository by fetching specific file contents or listing directory contents. Requires the repository to be specified as 'owner/repo'. Example questions: 'Show me the file src/app.ts in user/repo' or 'What is in the public directory of user/another-repo?' GitLab is not yet supported.",
+        parameters: z.object({
+          question: z.string().describe('The user\'s question about the repository, e.g., "Show me file src/app.js" or "List contents of public"'),
+          repository: z.string().describe('The repository in "owner/repo" format (e.g., "myorg/myproject")')
+        }),
+        execute: async ({ question, repository }) => {
+          const authStatus = checkGitHubAuth();
+          if (!authStatus.authenticated || !authStatus.apiKey) {
+            return { error: true, message: authStatus.message || 'GitHub API key not configured or missing.', service: 'GitHub' };
+          }
+
+          if (!repository || !repository.includes('/')) {
+            return { error: true, message: 'Please specify the repository in "owner/repo" format using the repository parameter.' };
+          }
+          const [owner, repo] = repository.split('/');
+          if (!owner || !repo) {
+            return { error: true, message: 'Invalid repository format. Please use "owner/repo".' };
+          }
+
+          const fileRegex = /file\s+([\w\/\.-]+)/i;
+          const dirRegex = /(?:directory|folder|contents of|list(?: files in)?)\s+([\w\/\.-]+)/i;
+
+          const fileMatch = question.match(fileRegex);
+          const dirMatch = question.match(dirRegex);
+
+          const headers = {
+            'Authorization': `Bearer ${authStatus.apiKey}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'X-GitHub-Api-Version': '2022-11-28'
+          };
+          const maxContentLength = 5000; // Characters
+
+          if (fileMatch) {
+            const filePath = fileMatch[1];
+            const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+            try {
+              const response = await fetch(apiUrl, { headers });
+              if (!response.ok) {
+                if (response.status === 404) {
+                  return { error: true, message: `File not found: ${filePath} in ${repository}. Details: ${await response.text()}` };
+                }
+                return { error: true, message: `Error fetching file from GitHub: ${response.statusText}. Details: ${await response.text()}` };
+              }
+              const data = await response.json();
+              if (data.type !== 'file') {
+                return { error: true, message: `Path '${filePath}' in ${repository} is not a file (it's a ${data.type}).` };
+              }
+              if (!data.content) {
+                return { error: true, message: `Could not retrieve content for file '${filePath}' in ${repository}. It might be an empty file or an issue with the response.`};
+              }
+              const decodedContent = Buffer.from(data.content, 'base64').toString('utf-8');
+              let contentSnippet = decodedContent;
+              if (decodedContent.length > maxContentLength) {
+                contentSnippet = decodedContent.substring(0, maxContentLength) + '\n... [content truncated] ...';
+              }
+              return { status: 'success', type: 'file', path: filePath, content: contentSnippet, message: `Content of file '${filePath}' from ${repository}:` };
+            } catch (error) {
+              return { error: true, message: `Error processing file request for ${filePath} in ${repository}: ${error instanceof Error ? error.message : String(error)}` };
+            }
+          } else if (dirMatch) {
+            const dirPath = dirMatch[1] === '/' || dirMatch[1] === '.' ? '' : dirMatch[1]; // Handle root path
+            const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${dirPath}`;
+            try {
+              const response = await fetch(apiUrl, { headers });
+              if (!response.ok) {
+                 if (response.status === 404) {
+                  return { error: true, message: `Directory not found: ${dirPath || '/'} in ${repository}. Details: ${await response.text()}` };
+                }
+                return { error: true, message: `Error fetching directory contents from GitHub: ${response.statusText}. Details: ${await response.text()}` };
+              }
+              const data = await response.json();
+              if (!Array.isArray(data)) {
+                // If it's a single object and type is file, the user might have asked to list a file.
+                if (data && data.type === 'file') {
+                   return { error: true, message: `Path '${dirPath}' in ${repository} is a file, not a directory. To see its content, ask to 'show me file ${dirPath}'.` };
+                }
+                return { error: true, message: `Path '${dirPath || '/'}' in ${repository} is not a directory. Details: ${JSON.stringify(data)}` };
+              }
+              const items = data.map(item => ({ name: item.name, type: item.type, path: item.path, size: item.size }));
+              return { status: 'success', type: 'directory', path: dirPath || '/', items: items, message: `Contents of directory '${dirPath || '/'}' in ${repository}:` };
+            } catch (error) {
+              return { error: true, message: `Error processing directory listing request for ${dirPath || '/'} in ${repository}: ${error instanceof Error ? error.message : String(error)}` };
+            }
+          } else {
+            return {
+              status: 'clarification_needed',
+              message: `I can fetch specific file contents or list directory contents from the repository '${repository}'. Please ask, for example, 'Show me the file src/index.js' or 'List contents of the src directory'.`
+            };
+          }
+        }
       })
-    },
-    system: `You are an advanced AI Agent capable of performing a wide variety of tasks. You have access to multiple tools that allow you to:
+    };
+
+    if (enableWebBrowsing) {
+      agentTools.webSearch = tool({
+        description: 'Search the web for real-time information, news, or research topics using a real search API. Useful for up-to-date information.',
+        parameters: z.object({
+          query: z.string().describe('Search query'),
+          type: z.enum(['general', 'news', 'academic', 'images']).optional().describe('Type of search (e.g., news, academic)')
+        }),
+        execute: async ({ query, type = 'general' }) => {
+          // TODO: Replace with actual API call to a search engine
+          // const apiKey = process.env.SEARCH_API_KEY;
+          // const response = await fetch(`https://api.example-search.com/search?q=${encodeURIComponent(query)}&type=${type}&key=${apiKey}`);
+          // const data = await response.json();
+          // return { query, type, results: data.results, resultCount: data.results.length };
+
+          // Enhanced mock results
+          const mockResults = [
+            {
+              title: `Enhanced Search: ${query} (${type})`,
+              snippet: `This is an enhanced mock search result for "${query}". A real API would provide live data.`,
+              url: `https://example.com/search?q=${encodeURIComponent(query)}&type=${type}`,
+              source: "WebSearchAPI (Mock)"
+            },
+            {
+              title: `More results for: ${query}`,
+              snippet: `Another detailed snippet about "${query}".`,
+              url: `https://example.com/search?q=${encodeURIComponent(query)}&type=${type}&page=2`,
+              source: "WebSearchAPI (Mock)"
+            }
+          ];
+          return {
+            query,
+            type,
+            results: mockResults,
+            resultCount: mockResults.length,
+            message: "Successfully fetched enhanced web search results (mock)."
+          };
+        },
+      });
+    }
+
+    const result = streamText({
+      ...baseConfig,
+      maxSteps: 10, // Enable multi-step agent behavior
+      tools: agentTools,
+      system: `You are an advanced AI Agent capable of performing a wide variety of tasks. You have access to multiple tools that allow you to:
 
 - Perform mathematical calculations and data analysis
-- Search for information and research topics
-- Generate and analyze code in multiple programming languages
+${enableWebBrowsing ? "- Search the web for current information, news, or research using the 'webSearch' tool." : "- (Web search is currently disabled)"}
 - Create and manage files
 - Plan and break down complex tasks
 - Compose professional communications
 - Provide weather and environmental information
+- Fetch code changes from GitHub pull requests for AI-driven code review (GitLab upcoming).
+- Answer questions about GitHub repositories by fetching file contents or listing directories (e.g., 'Show me file X in repo Y', 'List directory Z in repo A/B'). GitLab upcoming.
 
 When a user gives you a task:
-1. First, understand what they're trying to accomplish
-2. Break down complex tasks into manageable steps
-3. Use the appropriate tools to gather information or perform actions
-4. Provide clear, helpful responses with actionable insights
-5. If a task requires multiple steps, explain your process
+1. First, understand what they're trying to accomplish.
+2. Break down complex tasks into manageable steps.
+3. Use the appropriate tools to gather information or perform actions. ${enableWebBrowsing ? "If you need up-to-date information, use the 'webSearch' tool." : ""}
+4. Provide clear, helpful responses with actionable insights.
+5. If a task requires multiple steps, explain your process.
 
 Always be proactive in suggesting how you can help accomplish the user's goals. If you need clarification, ask specific questions to better understand their needs.`,
     });
 
     return result.toDataStreamResponse();
-  }  // Normal chat mode - simple conversation with limited tools
+  }
+  
+  // Normal chat mode - simple conversation with limited tools
   const result = streamText({
     ...baseConfig,
     tools: {
@@ -350,17 +531,16 @@ Always be proactive in suggesting how you can help accomplish the user's goals. 
 When a user asks something that would be much better handled with tools and actions, you should use the suggestModeSwitch tool. Specifically, suggest Agent Mode when users ask for:
 
 - Mathematical calculations or data analysis
-- Code generation or programming help
 - File creation or management
 - Complex task planning and project management
-- Web searches or real-time information
+- Web searches or real-time information (if web browsing is enabled in Agent Mode)
 - Weather forecasts
 - Email composition or professional writing assistance
 - Multi-step problem solving that requires tools
 
 When you detect such requests, immediately use the suggestModeSwitch tool with:
 1. A clear reason why their request would benefit from Agent Mode
-2. The specific capabilities Agent Mode would provide
+2. The specific capabilities Agent Mode would provide (mentioning web search if it could be relevant)
 3. The original user request
 
 Be conversational and helpful for simple questions, but proactively suggest Agent Mode for complex tasks that require tools.`,
