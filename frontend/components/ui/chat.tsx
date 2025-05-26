@@ -206,7 +206,7 @@ export function Chat({
   )
 
   return (
-    <ChatContainer className={className}>
+    <div className={cn("grid max-h-full w-full grid-rows-[1fr_auto]", className)}> {/* Replaced ChatContainer and applied its base styles */}
       <AnimatePresence>
         {isEmpty && append && suggestions && (
           <motion.div
@@ -262,7 +262,7 @@ export function Chat({
           />
         )}
       </ChatForm>
-    </ChatContainer>
+    </div>
   )
 }
 Chat.displayName = "Chat"
@@ -318,19 +318,7 @@ export function ChatMessages({
   )
 }
 
-export const ChatContainer = forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      className={cn("grid max-h-full w-full grid-rows-[1fr_auto]", className)}
-      {...props}
-    />
-  )
-})
-ChatContainer.displayName = "ChatContainer"
+// Removed ChatContainer component definition as it's no longer used directly in Chat component
 
 interface ChatFormProps {
   className?: string
