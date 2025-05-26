@@ -208,7 +208,7 @@ export function Chat({
   */
 
   return (
-    <div className="grid max-h-full w-full grid-rows-[1fr_auto]">
+    <div>
       <AnimatePresence>
         {isEmpty && append && suggestions && (
           <motion.div
