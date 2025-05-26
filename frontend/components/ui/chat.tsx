@@ -168,6 +168,7 @@ export function Chat({
     }
   }, [stop, setMessages, messagesRef])
 
+  /*
   const messageOptions = useCallback(
     (message: Message) => ({
       actions: onRateResponse ? (
@@ -203,7 +204,8 @@ export function Chat({
       ),
     }),
     [onRateResponse]
-  )
+  );
+  */
 
   return (
     <div className="grid max-h-full w-full grid-rows-[1fr_auto]">
@@ -230,7 +232,7 @@ export function Chat({
             <MessageList
               messages={chatMessages}
               isTyping={isTyping}
-              messageOptions={messageOptions}
+              // messageOptions={messageOptions} // Commented out as per task
             mode={mode}
             setMode={setMode}
             append={append}
