@@ -28,12 +28,6 @@ const chatBubbleVariants = cva(
         chat: "",
         undefined: "",
       },
-      animation: {
-        none: "",
-        slide: "duration-300 animate-in fade-in-0",
-        scale: "duration-300 animate-in fade-in-0 zoom-in-75",
-        fade: "duration-500 animate-in fade-in-0",
-      },
     },
     compoundVariants: [
       // User message styling based on mode
@@ -52,32 +46,9 @@ const chatBubbleVariants = cva(
         mode: undefined,
         class: "bg-primary text-primary-foreground",
       },
-      // Animation variants
-      {
-        isUser: true,
-        animation: "slide",
-        class: "slide-in-from-right",
-      },
-      {
-        isUser: false,
-        animation: "slide",
-        class: "slide-in-from-left",
-      },
-      {
-        isUser: true,
-        animation: "scale",
-        class: "origin-bottom-right",
-      },
-      {
-        isUser: false,
-        animation: "scale",
-        class: "origin-bottom-left",
-      },
     ],
   }
 )
-
-type Animation = VariantProps<typeof chatBubbleVariants>["animation"]
 
 interface Attachment {
   name?: string
@@ -140,7 +111,6 @@ export interface Message {
 
 export interface ChatMessageProps extends Message {
   showTimeStamp?: boolean
-  animation?: Animation
   actions?: React.ReactNode
   mode?: 'agent' | 'chat'
   setMode?: (mode: 'agent' | 'chat') => void
@@ -152,7 +122,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   content,
   createdAt,
   showTimeStamp = false,
-  animation = "scale",
   actions,
   experimental_attachments,
   toolInvocations,
@@ -189,17 +158,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           </div>
         ) : null}
 
-        <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className={cn(chatBubbleVariants({ isUser, mode }))}
+        >
           <MarkdownRenderer>{content}</MarkdownRenderer>
-        </div>
+        </motion.div>
 
         {showTimeStamp && createdAt ? (
           <time
             dateTime={createdAt.toISOString()}
-            className={cn(
-              "mt-1 block px-1 text-xs opacity-50",
-              animation !== "none" && "duration-500 animate-in fade-in-0"
-            )}
+            className="mt-1 block px-1 text-xs opacity-50"
           >
             {formattedTime}
           </time>
@@ -219,22 +190,24 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             )}
             key={`text-${index}`}
           >
-            <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className={cn(chatBubbleVariants({ isUser, mode }))}
+            >
               <MarkdownRenderer>{part.text}</MarkdownRenderer>
               {actions ? (
                 <div className="absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground opacity-0 transition-opacity group-hover/message:opacity-100">
                   {actions}
                 </div>
               ) : null}
-            </div>
+            </motion.div>
 
             {showTimeStamp && createdAt ? (
               <time
                 dateTime={createdAt.toISOString()}
-                className={cn(
-                  "mt-1 block px-1 text-xs opacity-50",
-                  animation !== "none" && "duration-500 animate-in fade-in-0"
-                )}
+                className="mt-1 block px-1 text-xs opacity-50"
               >
                 {formattedTime}
               </time>
@@ -264,22 +237,24 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   return (
     <div className={cn("flex flex-col", isUser ? "items-end" : "items-start")}>
-      <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className={cn(chatBubbleVariants({ isUser, mode }))}
+      >
         <MarkdownRenderer>{content}</MarkdownRenderer>
         {actions ? (
           <div className="absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground opacity-0 transition-opacity group-hover/message:opacity-100">
             {actions}
           </div>
         ) : null}
-      </div>
+      </motion.div>
 
       {showTimeStamp && createdAt ? (
         <time
           dateTime={createdAt.toISOString()}
-          className={cn(
-            "mt-1 block px-1 text-xs opacity-50",
-            animation !== "none" && "duration-500 animate-in fade-in-0"
-          )}
+          className="mt-1 block px-1 text-xs opacity-50"
         >
           {formattedTime}
         </time>
@@ -298,7 +273,12 @@ const ReasoningBlock = ({ part }: { part: ReasoningPart }) => {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="mb-2 flex flex-col items-start sm:max-w-[70%]">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="mb-2 flex flex-col items-start sm:max-w-[70%]"
+    >
       <Collapsible
         open={isOpen}
         onOpenChange={setIsOpen}
@@ -348,7 +328,12 @@ function ToolCall({
   if (!toolInvocations?.length) return null
 
   return (
-    <div className="flex flex-col items-start gap-2 sm:max-w-[80%]">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="flex flex-col items-start gap-2 sm:max-w-[80%]"
+    >
       {toolInvocations.map((invocation, index) => {
         const isCancelled =
           invocation.state === "result" &&

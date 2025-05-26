@@ -2,6 +2,7 @@
 import { useChat } from '@ai-sdk/react';
 import { useState, useCallback, useRef } from 'react';
 import { Bot, MessageCircle, Settings } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { Chat } from "@/components/ui/chat"
 import { Badge } from "@/components/ui/badge"
@@ -132,11 +133,18 @@ export default function Home() {
           </div>
 
           {/* Agent Capabilities */}
-          {messages.length === 0 && mode === 'agent' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">🧮 Mathematics</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+          <AnimatePresence>
+            {messages.length === 0 && mode === 'agent' && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 overflow-hidden"
+              >
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">🧮 Mathematics</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                   Complex calculations, unit conversions, statistical analysis
                 </p>
               </div>
@@ -168,25 +176,34 @@ export default function Home() {
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">📝 Content Creation</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Generate files, emails, and professional documents
-                </p>
-              </div>
-            </div>
-          )}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Chat Interface */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border min-h-[600px]">
-            {fallbackActive && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border min-h-[600px] relative overflow-hidden"> {/* Added relative and overflow-hidden for positioning context of AnimatePresence */}
+            <AnimatePresence>
+              {fallbackActive && (
+                <motion.div
+                  initial={{ opacity: 0, y: -50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -50 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 absolute top-0 left-0 right-0 z-10"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
                     {provider === 'google' 
                       ? '⚡ Switched to Google Gemini due to OpenRouter issues' 
                       : '⚡ Switching to backup provider...'}
-                  </p>
-                </div>
-              </div>
-            )}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
             <Chat
               messages={messages as Message[]}
               input={input}
@@ -196,7 +213,7 @@ export default function Home() {
               stop={stop}
               append={append}
               suggestions={currentSuggestions}
-              className="h-[600px] p-4"
+              className={`h-[600px] p-4 ${fallbackActive ? 'pt-16' : ''}`} // Adjust padding top if notification bar is active
               mode={mode}
               setMode={setMode}
               provider={provider}

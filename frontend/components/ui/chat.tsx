@@ -8,6 +8,7 @@ import {
   type ReactElement,
 } from "react"
 import { ArrowDown, ThumbsDown, ThumbsUp } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
 import { cn } from "@/lib/utils"
 import { useAutoScroll } from "@/hooks/use-auto-scroll"
@@ -57,7 +58,7 @@ interface ChatPropsWithSuggestions extends ChatPropsBase {
 type ChatProps = ChatPropsWithoutSuggestions | ChatPropsWithSuggestions
 
 export function Chat({
-  messages,
+  messages: chatMessages, // Renamed to avoid conflict with framer-motion's 'messages'
   handleSubmit,
   input,
   handleInputChange,
@@ -76,12 +77,12 @@ export function Chat({
   selectedModel,
   setSelectedModel,
 }: ChatProps) {
-  const lastMessage = messages.at(-1)
-  const isEmpty = messages.length === 0
+  const lastMessage = chatMessages.at(-1)
+  const isEmpty = chatMessages.length === 0
   const isTyping = lastMessage?.role === "user"
 
-  const messagesRef = useRef(messages)
-  messagesRef.current = messages
+  const messagesRef = useRef(chatMessages)
+  messagesRef.current = chatMessages
 
   // Enhanced stop function that marks pending tool calls as cancelled
   const handleStop = useCallback(() => {
@@ -206,20 +207,30 @@ export function Chat({
 
   return (
     <ChatContainer className={className}>
-      {isEmpty && append && suggestions ? (
-        <PromptSuggestions
-          label="Try these prompts ✨"
-          append={append}
-          suggestions={suggestions}
-        />
-      ) : null}
+      <AnimatePresence>
+        {isEmpty && append && suggestions && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <PromptSuggestions
+              label="Try these prompts ✨"
+              append={append}
+              suggestions={suggestions}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {messages.length > 0 ? (
-        <ChatMessages messages={messages}>
-          <MessageList
-            messages={messages}
-            isTyping={isTyping}
-            messageOptions={messageOptions}
+      {chatMessages.length > 0 ? (
+        <ChatMessages messages={chatMessages}>
+          <AnimatePresence initial={false}>
+            <MessageList
+              messages={chatMessages}
+              isTyping={isTyping}
+              messageOptions={messageOptions}
             mode={mode}
             setMode={setMode}
             append={append}
@@ -281,20 +292,28 @@ export function ChatMessages({
         {children}
       </div>
 
-      {!shouldAutoScroll && (
-        <div className="pointer-events-none flex flex-1 items-end justify-end [grid-column:1/1] [grid-row:1/1]">
-          <div className="sticky bottom-0 left-0 flex w-full justify-end">
-            <Button
-              onClick={scrollToBottom}
-              className="pointer-events-auto h-8 w-8 rounded-full ease-in-out animate-in fade-in-0 slide-in-from-bottom-1"
-              size="icon"
-              variant="ghost"
-            >
-              <ArrowDown className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {!shouldAutoScroll && (
+          <motion.div
+            className="pointer-events-none flex flex-1 items-end justify-end [grid-column:1/1] [grid-row:1/1]"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+          >
+            <div className="sticky bottom-0 left-0 flex w-full justify-end">
+              <Button
+                onClick={scrollToBottom}
+                className="pointer-events-auto h-8 w-8 rounded-full" // Removed conflicting animate-in classes
+                size="icon"
+                variant="ghost"
+              >
+                <ArrowDown className="h-4 w-4" />
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

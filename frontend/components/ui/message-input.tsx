@@ -328,7 +328,12 @@ export function MessageInput({
             aria-label="Stop generating"
             onClick={stop}
           >
-            <Square className="h-3 w-3 animate-pulse" fill="currentColor" />
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <Loader2 className="h-4 w-4" /> {/* Changed from Square to Loader2 */}
+            </motion.div>
           </Button>
         ) : (
           <Button
@@ -416,7 +421,13 @@ function TranscribingOverlay() {
       transition={{ duration: 0.2 }}
     >
       <div className="relative">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        {/* Loader2 with framer-motion rotation */}
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        >
+          <Loader2 className="h-8 w-8 text-primary" /> {/* Removed animate-spin */}
+        </motion.div>
         <motion.div
           className="absolute inset-0 h-8 w-8 animate-pulse rounded-full bg-primary/20"
           initial={{ scale: 0.8, opacity: 0 }}
