@@ -158,7 +158,7 @@ function ModeSettingsContent({
       models = models.filter(model => {
         if (!model.pricing?.prompt) return false // Skip if pricing info is missing
 
-        const price = parseFloat(model.pricing.prompt)
+        const price = model.pricing.prompt // Removed parseFloat
 
         switch (priceFilter) {
           case "under_0.001":
