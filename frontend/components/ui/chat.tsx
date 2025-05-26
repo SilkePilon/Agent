@@ -206,7 +206,7 @@ export function Chat({
   )
 
   return (
-    <div className={cn("grid max-h-full w-full grid-rows-[1fr_auto]", className)}> {/* Replaced ChatContainer and applied its base styles */}
+    <div className={cn("grid max-h-full w-full grid-rows-[1fr_auto]", className)}>
       <AnimatePresence>
         {isEmpty && append && suggestions && (
           <motion.div
