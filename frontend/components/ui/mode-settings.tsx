@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Bot, MessageCircle, Settings, Search, Loader2, Zap, Brain, DollarSign } from "lucide-react"
+import { Bot, MessageCircle, Settings, Search, Loader2, Zap, Brain, DollarSign, ListFilter } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { cn } from "@/lib/utils"
@@ -70,7 +70,7 @@ export function ModeSettings({
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
@@ -112,7 +112,8 @@ function ModeSettingsContent({
 }: ModeSettingsContentProps) {
   const [availableModels, setAvailableModels] = React.useState<ModelOption[]>([])
   const [modelSearchQuery, setModelSearchQuery] = React.useState("")
-  const [priceFilter, setPriceFilter] = React.useState("any") // Placeholder state
+  const [priceFilter, setPriceFilter] = React.useState("any")
+  const [sortOrder, setSortOrder] = React.useState("name_asc")
   const [isLoadingModels, setIsLoadingModels] = React.useState(false)
 
   // Define price ranges
@@ -121,6 +122,13 @@ function ModeSettingsContent({
     { label: "Under $0.001/1K tokens", value: "under_0.001" },
     { label: "$0.001 - $0.005/1K tokens", value: "0.001_to_0.005" },
     { label: "Over $0.005/1K tokens", value: "over_0.005" },
+  ]
+
+  // Define sort options
+  const sortOptions = [
+    { label: "Sort by Name (A-Z)", value: "name_asc" },
+    { label: "Sort by Price (Low to High)", value: "price_asc" },
+    { label: "Sort by Price (High to Low)", value: "price_desc" },
   ]
 
   // Load available models on mount
@@ -175,6 +183,36 @@ function ModeSettingsContent({
 
     return models
   }, [availableModels, modelSearchQuery, priceFilter, provider])
+
+  // Sort models based on sortOrder
+  const sortedAndFilteredModels = React.useMemo(() => {
+    let modelsToSort = [...filteredModels] // Create a shallow copy
+
+    switch (sortOrder) {
+      case "name_asc":
+        modelsToSort.sort((a, b) => a.name.localeCompare(b.name))
+        break
+      case "price_asc":
+        modelsToSort.sort((a, b) => {
+          const priceA = a.pricing?.prompt ?? Infinity
+          const priceB = b.pricing?.prompt ?? Infinity
+          return priceA - priceB
+        })
+        break
+      case "price_desc":
+        modelsToSort.sort((a, b) => {
+          const priceA = a.pricing?.prompt ?? -Infinity // Models without price will be at the end
+          const priceB = b.pricing?.prompt ?? -Infinity
+          return priceB - priceA // b - a for descending
+        })
+        break
+      default:
+        modelsToSort.sort((a, b) => a.name.localeCompare(b.name)) // Default to name_asc
+        break
+    }
+    return modelsToSort
+  }, [filteredModels, sortOrder])
+
   return (
     <div className="space-y-8">
       {/* Mode Selection */}
@@ -410,10 +448,10 @@ function ModeSettingsContent({
                 <h4 className="font-semibold">Select Model</h4>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end"> {/* Changed to md:grid-cols-3 and items-end */}
                 {/* Search Input */}
                 <motion.div 
-                  className="relative"
+                  className="relative md:col-span-1" // Adjusted column span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.1 }}
@@ -429,7 +467,7 @@ function ModeSettingsContent({
 
                 {/* Price Filter Dropdown */}
                 <motion.div
-                  className="relative"
+                  className="relative md:col-span-1" // Adjusted column span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.1 }}
@@ -443,6 +481,28 @@ function ModeSettingsContent({
                       {priceRanges.map(range => (
                         <SelectItem key={range.value} value={range.value}>
                           {range.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </motion.div>
+
+                {/* Sort By Dropdown */}
+                <motion.div
+                  className="relative md:col-span-1" // Adjusted column span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <ListFilter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Select value={sortOrder} onValueChange={setSortOrder}>
+                    <SelectTrigger className="pl-10 h-11 border-2 focus:border-blue-500 transition-colors" id="sort-order">
+                      <SelectValue placeholder="Sort by..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sortOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -471,19 +531,19 @@ function ModeSettingsContent({
                     </motion.div>
                     <span className="ml-3 text-sm text-muted-foreground">Loading models...</span>
                   </motion.div>
-                ) : filteredModels.length === 0 ? (
+                ) : sortedAndFilteredModels.length === 0 ? ( // Changed from filteredModels
                   <motion.div 
                     className="text-center py-8"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
                     <p className="text-sm text-muted-foreground">
-                      {modelSearchQuery ? 'No models found matching your search.' : 'No models available.'}
+                      {(modelSearchQuery || priceFilter !== "any") ? 'No models found matching your filters.' : 'No models available.'} {/* Updated message */}
                     </p>
                   </motion.div>
                 ) : (
                   <AnimatePresence>
-                    {filteredModels.map((model, index) => (
+                    {sortedAndFilteredModels.map((model, index) => ( // Changed from filteredModels
                       <motion.div
                         key={model.id}
                         className={cn(
@@ -562,11 +622,11 @@ function ModeSettingsContent({
             <span className="font-medium text-sm">Current Configuration</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            <span className="font-medium">Provider:</span> {provider === 'google' ? 'Google Gemini' : 'OpenRouter'} • 
+            <span className="font-medium">Provider:</span> {provider === 'google' ? 'Google Gemini' : 'OpenRouter'} •
             <span className="font-medium"> Model:</span>{' '}
-            {provider === 'google' 
-              ? 'Gemini 2.5 Flash Preview' 
-              : `${availableModels.find(m => m.id === selectedModel)?.name || selectedModel || 'No model selected'}`
+            {provider === 'google'
+              ? 'Gemini 2.5 Flash Preview'
+              : `${sortedAndFilteredModels.find(m => m.id === selectedModel)?.name || selectedModel || 'No model selected'}` // Updated to use sortedAndFilteredModels
             }
           </p>
         </motion.div>
