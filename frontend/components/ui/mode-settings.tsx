@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Bot, MessageCircle, Settings, Search, Loader2, Zap, Brain } from "lucide-react"
+import { Bot, MessageCircle, Settings, Search, Loader2, Zap, Brain, DollarSign } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { cn } from "@/lib/utils"
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface ModeSettingsProps {
   mode?: 'agent' | 'chat'
@@ -111,7 +112,16 @@ function ModeSettingsContent({
 }: ModeSettingsContentProps) {
   const [availableModels, setAvailableModels] = React.useState<ModelOption[]>([])
   const [modelSearchQuery, setModelSearchQuery] = React.useState("")
+  const [priceFilter, setPriceFilter] = React.useState("any") // Placeholder state
   const [isLoadingModels, setIsLoadingModels] = React.useState(false)
+
+  // Define price ranges
+  const priceRanges = [
+    { label: "Any Price", value: "any" },
+    { label: "Under $0.001/1K tokens", value: "under_0.001" },
+    { label: "$0.001 - $0.005/1K tokens", value: "0.001_to_0.005" },
+    { label: "Over $0.005/1K tokens", value: "over_0.005" },
+  ]
 
   // Load available models on mount
   React.useEffect(() => {
@@ -130,16 +140,41 @@ function ModeSettingsContent({
     loadModels()
   }, [])
 
-  // Filter models based on search query
+  // Filter models based on search query and price filter
   const filteredModels = React.useMemo(() => {
-    if (!modelSearchQuery.trim()) return availableModels
+    let models = availableModels
 
-    return availableModels.filter(model =>
-      model.name.toLowerCase().includes(modelSearchQuery.toLowerCase()) ||
-      model.id.toLowerCase().includes(modelSearchQuery.toLowerCase()) ||
-      model.description?.toLowerCase().includes(modelSearchQuery.toLowerCase())
-    )
-  }, [availableModels, modelSearchQuery])
+    // Filter by search query
+    if (modelSearchQuery.trim()) {
+      models = models.filter(model =>
+        model.name.toLowerCase().includes(modelSearchQuery.toLowerCase()) ||
+        model.id.toLowerCase().includes(modelSearchQuery.toLowerCase()) ||
+        model.description?.toLowerCase().includes(modelSearchQuery.toLowerCase())
+      )
+    }
+
+    // Filter by price (only for OpenRouter)
+    if (provider === 'openrouter' && priceFilter !== "any") {
+      models = models.filter(model => {
+        if (!model.pricing?.prompt) return false // Skip if pricing info is missing
+
+        const price = parseFloat(model.pricing.prompt)
+
+        switch (priceFilter) {
+          case "under_0.001":
+            return price < 0.001
+          case "0.001_to_0.005":
+            return price >= 0.001 && price <= 0.005
+          case "over_0.005":
+            return price > 0.005
+          default:
+            return true
+        }
+      })
+    }
+
+    return models
+  }, [availableModels, modelSearchQuery, priceFilter, provider])
   return (
     <div className="space-y-8">
       {/* Mode Selection */}
@@ -375,21 +410,45 @@ function ModeSettingsContent({
                 <h4 className="font-semibold">Select Model</h4>
               </div>
               
-              {/* Search Input */}
-              <motion.div 
-                className="relative"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-              >
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search models..."
-                  value={modelSearchQuery}
-                  onChange={(e) => setModelSearchQuery(e.target.value)}
-                  className="pl-10 h-11 border-2 focus:border-blue-500 transition-colors"
-                />
-              </motion.div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Search Input */}
+                <motion.div 
+                  className="relative"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search models..."
+                    value={modelSearchQuery}
+                    onChange={(e) => setModelSearchQuery(e.target.value)}
+                    className="pl-10 h-11 border-2 focus:border-blue-500 transition-colors"
+                  />
+                </motion.div>
+
+                {/* Price Filter Dropdown */}
+                <motion.div
+                  className="relative"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Select value={priceFilter} onValueChange={setPriceFilter}>
+                    <SelectTrigger className="pl-10 h-11 border-2 focus:border-blue-500 transition-colors">
+                      <SelectValue placeholder="Filter by price..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {priceRanges.map(range => (
+                        <SelectItem key={range.value} value={range.value}>
+                          {range.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </motion.div>
+              </div>
 
               {/* Model List */}
               <motion.div 
