@@ -265,7 +265,9 @@ export function MessageInput({
             mode={props.mode}
             setMode={props.setMode}
             provider={props.provider}
+            setProvider={props.setProvider}
             selectedModel={props.selectedModel}
+            setSelectedModel={props.setSelectedModel}
           >
             <Button
               type="button"
