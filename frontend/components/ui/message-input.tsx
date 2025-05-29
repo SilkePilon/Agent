@@ -12,7 +12,7 @@ import { AudioVisualizer } from "@/components/ui/audio-visualizer"
 import { Button } from "@/components/ui/button"
 import { FilePreview } from "@/components/ui/file-preview"
 import { InterruptPrompt } from "@/components/ui/interrupt-prompt"
-import { ModeSettings } from "@/components/ui/mode-settings"
+import { SettingsTooltip } from "@/components/ui/settings-tooltip"
 
 interface MessageInputBaseProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -259,15 +259,13 @@ export function MessageInput({
       </div>
 
       <div className="absolute right-3 top-3 z-20 flex gap-2">
-        {/* Mode Settings Dialog/Drawer */}
+        {/* Settings Tooltip */}
         {props.mode && props.setMode && (
-          <ModeSettings
+          <SettingsTooltip
             mode={props.mode}
             setMode={props.setMode}
             provider={props.provider}
-            setProvider={props.setProvider}
             selectedModel={props.selectedModel}
-            setSelectedModel={props.setSelectedModel}
           >
             <Button
               type="button"
@@ -278,7 +276,7 @@ export function MessageInput({
             >
               <Settings className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90 group-hover:scale-110" />
             </Button>
-          </ModeSettings>
+          </SettingsTooltip>
         )}
         
         {props.allowAttachments && (
