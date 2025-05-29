@@ -1,23 +1,11 @@
 "use client"
 import { useChat } from '@ai-sdk/react';
 import { useState, useCallback, useRef } from 'react';
-import { Bot, MessageCircle, Settings } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-import { Chat } from "@/components/ui/chat"
-import { Badge } from "@/components/ui/badge"
+import { ChatMessages } from "@/components/ui/chat-messages"
+import { ChatInput } from "@/components/ui/chat-input"
 import { type Message } from "@/components/ui/chat-message"
-
-const agentSuggestions = [
-  "Calculate the compound interest on $10,000 at 5% for 10 years",
-  "Create a Python script that analyzes CSV data",
-  "Break down the task of building a website into steps"
-];
-
-const chatSuggestions = [
-  "What's the weather like today?",
-  "Tell me a joke", 
-  "Explain quantum computing in simple terms"
-];
 
 export default function Home() {
   const [mode, setMode] = useState<'agent' | 'chat'>('agent');
@@ -79,144 +67,60 @@ export default function Home() {
     }
   });
   
-  // Enhanced handleSubmit
   const enhancedHandleSubmit = useCallback((e?: { preventDefault?: () => void }, options?: { experimental_attachments?: FileList }) => {
-    // If we detected an error previously, this submission should use fallback
     if (retryAttemptRef.current) {
       console.log('Submitting with fallback flag set');
     }
     return handleSubmit(e, options);
   }, [handleSubmit]);
 
-  const currentSuggestions = mode === 'agent' ? agentSuggestions : chatSuggestions;
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              AI Assistant
-            </h1>
-            
-            {mode === 'agent' ? (
-              <div className="space-y-2">
-                <div className="flex items-center justify-center gap-2">
-                  <Badge variant="default" className="bg-blue-500 text-white px-3 py-1">
-                    <Bot className="h-3 w-3 mr-1" />
-                    Agent Mode
-                  </Badge>
-                  <Settings className="h-4 w-4 text-gray-500" />
-                </div>
-                <p className="text-lg text-gray-600 dark:text-gray-400">
-                  Your intelligent assistant capable of performing complex tasks, calculations, 
-                  code generation, planning, and much more.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex items-center justify-center gap-2">
-                  <Badge variant="outline" className="px-3 py-1">
-                    <MessageCircle className="h-3 w-3 mr-1" />
-                    Chat Mode
-                  </Badge>
-                  <Settings className="h-4 w-4 text-gray-500" />
-                </div>
-                <p className="text-lg text-gray-600 dark:text-gray-400">
-                  Have a natural conversation with the AI assistant. Ask questions, get explanations, 
-                  or just chat about anything on your mind.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Agent Capabilities */}
-          {messages.length === 0 && mode === 'agent' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">🧮 Mathematics</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Complex calculations, unit conversions, statistical analysis
-                </p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">💻 Code Generation</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Generate and analyze code in multiple programming languages
-                </p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">📋 Task Planning</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Break down complex projects into manageable steps
-                </p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">🔍 Research</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Web search and information gathering capabilities
-                </p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">📊 Data Analysis</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Analyze datasets and provide insights and patterns
-                </p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">📝 Content Creation</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Generate files, emails, and professional documents
-                </p>
-              </div>
+    <motion.div 
+      className="min-h-screen bg-white dark:bg-gray-950 flex flex-col relative"
+      layout
+    >
+      {/* Messages Container - appears and moves up when there are messages */}
+      <AnimatePresence>
+        {messages.length > 0 && (
+          <motion.div
+            className="flex-1 flex justify-center px-4 pt-8 pb-32 overflow-y-auto"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 300, 
+              damping: 25,
+              duration: 0.6
+            }}
+          >
+            <div className="w-full max-w-3xl">
+              <ChatMessages
+                messages={messages as Message[]}
+                stop={stop}
+                mode={mode}
+                setMode={setMode}
+              />
             </div>
-          )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          {/* Chat Interface */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border min-h-[600px]">
-            {fallbackActive && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                    {provider === 'google' 
-                      ? '⚡ Switched to Google Gemini due to OpenRouter issues' 
-                      : '⚡ Switching to backup provider...'}
-                  </p>
-                </div>
-              </div>
-            )}
-            <Chat
-              messages={messages as Message[]}
-              input={input}
-              handleInputChange={handleInputChange}
-              handleSubmit={enhancedHandleSubmit}
-              isGenerating={isLoading}
-              stop={stop}
-              append={append}
-              suggestions={currentSuggestions}
-              className="h-[600px] p-4"
-              mode={mode}
-              setMode={setMode}
-              provider={provider}
-              setProvider={setProvider}
-              selectedModel={selectedModel}
-              setSelectedModel={setSelectedModel}
-            />
-          </div>
-
-          {/* Footer */}
-          <div className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
-            <p>
-              {mode === 'agent' 
-                ? "This AI Agent uses advanced multi-step reasoning and tool usage to accomplish complex tasks. Try asking it to solve problems, generate code, or help with planning."
-                : "Chat mode provides natural conversation without external tools. Perfect for questions, explanations, and casual discussions."
-              }
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+      {/* Chat Input Container - moves from center to bottom */}
+      <ChatInput
+        input={input}
+        handleInputChange={handleInputChange}
+        handleSubmit={enhancedHandleSubmit}
+        isGenerating={isLoading}
+        stop={stop}
+        mode={mode}
+        setMode={setMode}
+        provider={provider}
+        setProvider={setProvider}
+        selectedModel={selectedModel}
+        setSelectedModel={setSelectedModel}
+        hasMessages={messages.length > 0}
+      />
+    </motion.div>
   );
 }

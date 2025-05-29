@@ -206,14 +206,6 @@ export function Chat({
 
   return (
     <ChatContainer className={className}>
-      {isEmpty && append && suggestions ? (
-        <PromptSuggestions
-          label="Try these prompts ✨"
-          append={append}
-          suggestions={suggestions}
-        />
-      ) : null}
-
       {messages.length > 0 ? (
         <ChatMessages messages={messages}>
           <MessageList
@@ -228,7 +220,7 @@ export function Chat({
       ) : null}
 
       <ChatForm
-        className="mt-auto"
+        className={messages.length > 0 ? "mt-auto sticky bottom-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 p-4 z-10" : ""}
         isPending={isGenerating || isTyping}
         handleSubmit={handleSubmit}
       >
@@ -306,7 +298,7 @@ export const ChatContainer = forwardRef<
   return (
     <div
       ref={ref}
-      className={cn("grid max-h-full w-full grid-rows-[1fr_auto]", className)}
+      className={cn("flex flex-col w-full h-full", className)}
       {...props}
     />
   )
