@@ -204,20 +204,6 @@ export function MessageInput({
         onStopRecording={stopRecording}
       />
 
-      {/* Agent Mode Indicator - Top Middle */}
-      {props.mode === 'agent' && (
-        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-md shadow-sm">
-          <Bot className="h-3 w-3" />
-          <span className="font-medium">Agent Mode Active</span>
-        </div>
-      )}
-      {props.mode === 'chat' && (
-        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-1 bg-green-500 text-white text-xs rounded-md shadow-sm">
-          <MessageCircle strokeWidth={3} className="h-3 w-3" />
-          <span className="font-medium">Chat Mode Active</span>
-        </div>
-      )}
-
       <div className="relative flex w-full items-center space-x-2">
         
         <div className="relative flex-1">
@@ -227,6 +213,8 @@ export function MessageInput({
             ref={textAreaRef}
             onPaste={onPaste}
             onKeyDown={onKeyDown}
+            onFocus={props.onFocus}
+            onBlur={props.onBlur}
             className={cn(
               "z-10 w-full grow resize-none rounded-xl border-2 border-input bg-background p-3 pr-24 text-sm ring-offset-background transition-[border] placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
               props.mode === 'agent' 
@@ -324,7 +312,10 @@ export function MessageInput({
           <Button
             type="button"
             size="icon"
-            className="h-8 w-8"
+            className={cn(
+              "h-8 w-8",
+              props.mode === 'agent' ? "bg-blue-500 hover:bg-blue-600 text-white" : "bg-green-500 hover:bg-green-600 text-white"
+            )}
             aria-label="Stop generating"
             onClick={stop}
           >
@@ -336,7 +327,7 @@ export function MessageInput({
             size="icon"
             className={cn(
               "h-8 w-8 transition-opacity",
-              props.mode === 'agent' ? "bg-blue-500 hover:bg-blue-600 text-white" : ""
+              props.mode === 'agent' ? "bg-blue-500 hover:bg-blue-600 text-white" : "bg-green-500 hover:bg-green-600 text-white"
             )}
             aria-label="Send message"
             disabled={props.value === "" || isGenerating}

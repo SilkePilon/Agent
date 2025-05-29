@@ -12,6 +12,7 @@ export default function Home() {
   const [fallbackActive, setFallbackActive] = useState(false);
   const [provider, setProvider] = useState<'openrouter' | 'google'>('openrouter');
   const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash-preview-05-20:thinking');
+  const [isFocused, setIsFocused] = useState(false);
   const retryAttemptRef = useRef(false);
   
   // Custom error handler for the chat
@@ -120,6 +121,8 @@ export default function Home() {
         selectedModel={selectedModel}
         setSelectedModel={setSelectedModel}
         hasMessages={messages.length > 0}
+        isFocused={isFocused}
+        setIsFocused={setIsFocused}
       />
     </motion.div>
   );

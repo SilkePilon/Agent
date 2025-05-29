@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
+import { Bot, MessageCircle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { MessageInput } from "@/components/ui/message-input"
@@ -24,6 +25,8 @@ interface ChatInputProps {
   selectedModel?: string
   setSelectedModel?: (model: string) => void
   hasMessages?: boolean
+  isFocused?: boolean
+  setIsFocused?: (focused: boolean) => void
 }
 
 function createFileList(files: File[] | FileList): FileList {
@@ -48,6 +51,8 @@ export function ChatInput({
   selectedModel,
   setSelectedModel,
   hasMessages = false,
+  isFocused = false,
+  setIsFocused,
   className,
 }: ChatInputProps) {
   const [files, setFiles] = useState<File[] | null>(null)
@@ -55,15 +60,14 @@ export function ChatInput({
     if (!files) {
       handleSubmit(event)
       return
-    }
-
-    const fileList = createFileList(files)
+    }    const fileList = createFileList(files)
     handleSubmit(event, { experimental_attachments: fileList })
     setFiles(null)
   }
+  
   return (
     <motion.div
-      className="flex flex-col w-full"
+      className="flex flex-col w-full relative"
       initial={false}
       animate={{
         position: hasMessages ? "fixed" : "absolute",
@@ -81,9 +85,65 @@ export function ChatInput({
         stiffness: 200, 
         damping: 25,
         duration: 1.2
-      }}
-    >
-      <form onSubmit={onSubmit}>
+      }}    >      {/* Agent/Chat Mode Indicator - Positioned at top center of entire card */}
+      <AnimatePresence>        {isFocused && mode === 'agent' && (
+          <motion.div 
+            className="absolute left-1/2 transform -translate-x-1/2 -top-10 z-0 flex items-center gap-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-md shadow-sm pointer-events-none"
+            initial={{ opacity: 0, y: 80 }}
+            animate={{ 
+              opacity: 1, 
+              y: 0,
+              transition: { 
+                type: "spring", 
+                stiffness: 300, 
+                damping: 30,
+                duration: 1.2
+              }
+            }}
+            exit={{ 
+              opacity: 0, 
+              y: 80,
+              transition: { 
+                type: "spring", 
+                stiffness: 250, 
+                damping: 35,
+                duration: 1.8
+              }
+            }}
+          >
+            <Bot className="h-3 w-3" />
+            <span className="font-medium">Agent Mode Active</span>
+          </motion.div>
+        )}        {isFocused && mode === 'chat' && (
+          <motion.div 
+            className="absolute left-1/2 transform -translate-x-1/2 -top-10 z-0 flex items-center gap-2 px-3 py-1 bg-green-500 text-white text-xs rounded-md shadow-sm pointer-events-none"
+            initial={{ opacity: 0, y: 80 }}
+            animate={{ 
+              opacity: 1, 
+              y: 0,
+              transition: { 
+                type: "spring", 
+                stiffness: 300, 
+                damping: 30,
+                duration: 1.2
+              }
+            }}
+            exit={{ 
+              opacity: 0, 
+              y: 80,
+              transition: { 
+                type: "spring", 
+                stiffness: 250, 
+                damping: 35,
+                duration: 1.8
+              }
+            }}
+          >
+            <MessageCircle strokeWidth={3} className="h-3 w-3" />
+            <span className="font-medium">Chat Mode Active</span>
+          </motion.div>
+        )}
+      </AnimatePresence>      <form onSubmit={onSubmit} className="relative z-10">
         <MessageInput
           value={input}
           onChange={handleInputChange}
@@ -99,6 +159,8 @@ export function ChatInput({
           setProvider={setProvider}
           selectedModel={selectedModel}
           setSelectedModel={setSelectedModel}
+          onFocus={() => setIsFocused?.(true)}
+          onBlur={() => setIsFocused?.(false)}
         />
       </form>
     </motion.div>
