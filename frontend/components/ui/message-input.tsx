@@ -273,10 +273,10 @@ export function MessageInput({
               type="button"
               size="icon"
               variant="outline"
-              className="h-8 w-8"
+              className="h-8 w-8 group"
               aria-label="Settings"
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90 group-hover:scale-110" />
             </Button>
           </ModeSettings>
         )}
@@ -286,26 +286,26 @@ export function MessageInput({
             type="button"
             size="icon"
             variant="outline"
-            className="h-8 w-8"
+            className="h-8 w-8 group"
             aria-label="Attach a file"
             onClick={async () => {
               const files = await showFileUploadDialog()
               addFiles(files)
             }}
           >
-            <Paperclip className="h-4 w-4" />
+            <Paperclip className="h-4 w-4 transition-transform duration-200 group-hover:rotate-12 group-hover:scale-110" />
           </Button>
         )}
         {isSpeechSupported && (
           <Button
             type="button"
             variant="outline"
-            className={cn("h-8 w-8", isListening && "text-primary")}
+            className={cn("h-8 w-8 group", isListening && "text-primary")}
             aria-label="Voice input"
             size="icon"
             onClick={toggleListening}
           >
-            <Mic className="h-4 w-4" />
+            <Mic className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
           </Button>
         )}
         {isGenerating && stop ? (
@@ -313,26 +313,26 @@ export function MessageInput({
             type="button"
             size="icon"
             className={cn(
-              "h-8 w-8",
+              "h-8 w-8 group",
               props.mode === 'agent' ? "bg-blue-500 hover:bg-blue-600 text-white" : "bg-green-500 hover:bg-green-600 text-white"
             )}
             aria-label="Stop generating"
             onClick={stop}
           >
-            <Square className="h-3 w-3 animate-pulse" fill="currentColor" />
+            <Square className="h-3 w-3 animate-pulse transition-transform duration-200 group-hover:scale-110" fill="currentColor" />
           </Button>
         ) : (
           <Button
             type="submit"
             size="icon"
             className={cn(
-              "h-8 w-8 transition-opacity",
+              "h-8 w-8 group transition-all duration-200",
               props.mode === 'agent' ? "bg-blue-500 hover:bg-blue-600 text-white" : "bg-green-500 hover:bg-green-600 text-white"
             )}
             aria-label="Send message"
             disabled={props.value === "" || isGenerating}
           >
-            <ArrowUp className="h-5 w-5" />
+            <ArrowUp className="h-5 w-5 transition-transform duration-200 group-hover:scale-110 group-hover:-translate-y-0.5" />
           </Button>
         )}
       </div>

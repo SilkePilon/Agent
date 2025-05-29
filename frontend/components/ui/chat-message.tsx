@@ -16,7 +16,7 @@ import { FilePreview } from "@/components/ui/file-preview"
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer"
 
 const chatBubbleVariants = cva(
-  "group/message relative break-words rounded-lg p-3 text-sm sm:max-w-[70%]",
+  "group/message relative break-words rounded-lg p-3 text-sm max-w-[min(70%,theme(maxWidth.2xl))] w-fit",
   {
     variants: {
       isUser: {
@@ -179,7 +179,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   if (isUser) {
     return (
       <div
-        className={cn("flex flex-col", isUser ? "items-end" : "items-start")}
+        className={cn("flex flex-col w-full max-w-full overflow-x-hidden", isUser ? "items-end" : "items-start")}
       >
         {files ? (
           <div className="mb-1 flex flex-wrap gap-2">
@@ -214,7 +214,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         return (
           <div
             className={cn(
-              "flex flex-col",
+              "flex flex-col w-full max-w-full overflow-x-hidden",
               isUser ? "items-end" : "items-start"
             )}
             key={`text-${index}`}
@@ -263,7 +263,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   }
 
   return (
-    <div className={cn("flex flex-col", isUser ? "items-end" : "items-start")}>
+    <div className={cn("flex flex-col w-full max-w-full overflow-x-hidden", isUser ? "items-end" : "items-start")}>
       <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
         <MarkdownRenderer>{content}</MarkdownRenderer>
         {actions ? (
@@ -298,7 +298,7 @@ const ReasoningBlock = ({ part }: { part: ReasoningPart }) => {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="mb-2 flex flex-col items-start sm:max-w-[70%]">
+    <div className="mb-2 flex flex-col items-start max-w-[min(70%,theme(maxWidth.2xl))] w-fit">
       <Collapsible
         open={isOpen}
         onOpenChange={setIsOpen}
@@ -348,7 +348,7 @@ function ToolCall({
   if (!toolInvocations?.length) return null
 
   return (
-    <div className="flex flex-col items-start gap-2 sm:max-w-[80%]">
+    <div className="flex flex-col items-start gap-2 max-w-[min(80%,theme(maxWidth.2xl))] w-fit">
       {toolInvocations.map((invocation, index) => {
         const isCancelled =
           invocation.state === "result" &&

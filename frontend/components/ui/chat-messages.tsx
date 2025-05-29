@@ -183,9 +183,8 @@ export function ChatMessages({
         damping: 25,
         duration: 0.6
       }}
-    >
-      <div
-        className="grid grid-cols-1 overflow-y-auto pb-4 flex-1"
+    >      <div
+        className="grid grid-cols-1 overflow-y-auto overflow-x-hidden pb-4 flex-1"
         ref={containerRef}
         onScroll={handleScroll}
         onTouchStart={handleTouchStart}

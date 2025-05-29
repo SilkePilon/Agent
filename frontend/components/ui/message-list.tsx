@@ -30,7 +30,7 @@ export function MessageList({
   append,
 }: MessageListProps) {
   return (
-    <div className="space-y-4 overflow-visible">
+    <div className="space-y-4 overflow-x-hidden w-full max-w-full">
       <AnimatePresence mode="popLayout">
         {messages.map((message, index) => {
           const additionalOptions =

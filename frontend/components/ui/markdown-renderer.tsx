@@ -42,7 +42,7 @@ const LinkBadges = ({ text }: { text: string }) => {
 
 export function MarkdownRenderer({ children }: MarkdownRendererProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 max-w-full overflow-x-hidden">
       <Markdown remarkPlugins={[remarkGfm]} components={COMPONENTS}>
         {children}
       </Markdown>
@@ -124,12 +124,12 @@ const CodeBlock = ({
       : childrenTakeAllStringContents(children)
 
   const preClass = cn(
-    "overflow-x-scroll rounded-md border bg-background/50 p-4 font-mono text-sm [scrollbar-width:none]",
+    "overflow-x-auto rounded-md border bg-background/50 p-4 font-mono text-sm max-w-full [scrollbar-width:none]",
     className
   )
 
   return (
-    <div className="group/code relative mb-4">
+    <div className="group/code relative mb-4 max-w-full overflow-hidden">
       <Suspense
         fallback={
           <pre className={preClass} {...restProps}>
@@ -211,7 +211,7 @@ const COMPONENTS = {
   li: withClass("li", "my-1.5"),
   table: withClass(
     "table",
-    "w-full border-collapse overflow-y-auto rounded-md border border-foreground/20"
+    "max-w-full border-collapse overflow-auto rounded-md border border-foreground/20"
   ),
   th: withClass(
     "th",
