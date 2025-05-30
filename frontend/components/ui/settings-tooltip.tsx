@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer"
 
 // Scrolling text component for long model names
 interface ScrollingTextProps {
@@ -140,12 +141,11 @@ function ModelItemContent({ model }: ModelItemContentProps) {
                             maxWidth={224}
                             isParentHovered={isHovered}
                         />
-                    </div>
-                    {model.description && (
+                    </div>                    {model.description && (
                         <div className="w-full overflow-hidden text-left">
-                            <span className="text-muted-foreground text-xs truncate block max-w-[224px] text-left">
-                                {model.description}
-                            </span>
+                            <div className="text-muted-foreground text-xs truncate block max-w-[224px] text-left prose prose-xs max-w-none prose-p:my-0 prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-strong:font-semibold prose-em:italic">
+                                <MarkdownRenderer>{model.description}</MarkdownRenderer>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -157,10 +157,9 @@ function ModelItemContent({ model }: ModelItemContentProps) {
                 className="max-w-xs p-0 bg-background border border-border shadow-md rounded-lg overflow-hidden z-[9999]"
             >
                 <div className="p-3 space-y-1.5"> {/* Adjusted padding to inner div and space-y */}
-                    <div className="font-medium text-foreground">{model.name}</div>
-                    {model.description && (
-                        <div className="text-xs text-muted-foreground whitespace-normal leading-relaxed">
-                            {model.description}
+                    <div className="font-medium text-foreground">{model.name}</div>                    {model.description && (
+                        <div className="text-xs text-muted-foreground whitespace-normal leading-relaxed prose prose-xs max-w-none prose-p:my-1 prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-strong:font-semibold prose-em:italic">
+                            <MarkdownRenderer>{model.description}</MarkdownRenderer>
                         </div>
                     )}
                     <div className="flex items-center text-xs text-muted-foreground">

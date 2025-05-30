@@ -457,14 +457,8 @@ function ModeSettingsContent({
                                       Selected
                                     </Badge>
                                   </motion.div>
-                                )}
-                              </AnimatePresence>
+                                )}                              </AnimatePresence>
                             </div>
-                            {model.description && (
-                              <p className="text-xs text-muted-foreground mb-2 line-clamp-2 leading-relaxed">
-                                {model.description}
-                              </p>
-                            )}
                             <div className="flex items-center gap-4 flex-wrap">
                               {model.pricing && (
                                 <div className="flex items-center gap-3 text-xs bg-muted/50 px-2 py-1 rounded-md">
