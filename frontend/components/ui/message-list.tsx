@@ -4,7 +4,7 @@ import {
   type Message,
 } from "@/components/ui/chat-message"
 import { TypingIndicator } from "@/components/ui/typing-indicator"
-import { AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 
 type AdditionalMessageOptions = Omit<ChatMessageProps, keyof Message>
 
@@ -31,32 +31,85 @@ export function MessageList({
 }: MessageListProps) {
   return (
     <div className="space-y-4 overflow-hidden w-full max-w-full message-list-container">
-      {messages.map((message, index) => {
-        const additionalOptions =
-          typeof messageOptions === "function"
-            ? messageOptions(message)
-            : messageOptions
+      <AnimatePresence mode="popLayout">
+        {messages.map((message, index) => {
+          const additionalOptions =
+            typeof messageOptions === "function"
+              ? messageOptions(message)
+              : messageOptions
 
-        return (
-          <div
-            key={`${message.id}-${index}`}
-          >
-            <ChatMessage
-              showTimeStamp={showTimeStamps}
-              animation="none"
-              {...message}
-              {...additionalOptions}
-              mode={mode}
-              setMode={setMode}
-              append={append}
-            />
-          </div>
-        )
-      })}
-      
-      <AnimatePresence>
+          return (
+            <motion.div
+              key={`${message.id}-${index}`}
+              layout
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0, 
+                scale: 1,
+                transition: {
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 25,
+                  duration: 0.6
+                }
+              }}
+              exit={{ 
+                opacity: 0, 
+                y: -20, 
+                scale: 0.95,
+                transition: {
+                  type: "spring",
+                  stiffness: 500,
+                  damping: 35,
+                  duration: 0.4
+                }
+              }}
+            >
+              <ChatMessage
+                showTimeStamp={showTimeStamps}
+                animation="none"
+                {...message}
+                {...additionalOptions}
+                mode={mode}
+                setMode={setMode}
+                append={append}
+              />
+            </motion.div>
+          )
+        })}
+        
+        {/* Typing indicator with coordinated animation */}
         {isTyping && (
-          <TypingIndicator mode={mode} />
+          <motion.div
+            key="typing-indicator"
+            layout
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ 
+              opacity: 1, 
+              y: 0, 
+              scale: 1,
+              transition: {
+                type: "spring",
+                stiffness: 300,
+                damping: 25,
+                duration: 0.5
+              }
+            }}
+            exit={{ 
+              opacity: 0, 
+              y: -10, 
+              scale: 0.9,
+              transition: {
+                type: "spring",
+                stiffness: 400,
+                damping: 30,
+                duration: 0.3
+              }
+            }}
+          >
+            <TypingIndicator mode={mode} />
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
