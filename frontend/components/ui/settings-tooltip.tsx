@@ -266,7 +266,7 @@ interface SettingsFormContentsProps {
     // For select dropdown state, to be used internally by the form
     selectOpen: boolean
     setSelectOpen: (open: boolean) => void
-    searchInputRef: React.RefObject<HTMLInputElement>
+    searchInputRef: React.RefObject<HTMLInputElement | null>
     // To control main tooltip visibility from select, if SettingsFormContents is used in Tooltip
     setParentTooltipOpen?: (open: boolean) => void 
 }
