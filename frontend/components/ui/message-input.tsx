@@ -12,8 +12,19 @@ import { AudioVisualizer } from "@/components/ui/audio-visualizer"
 import { Button } from "@/components/ui/button"
 import { FilePreview } from "@/components/ui/file-preview"
 import { InterruptPrompt } from "@/components/ui/interrupt-prompt"
-import { SettingsTooltip } from "@/components/ui/settings-tooltip"
+import { SettingsTooltip, SettingsFormContents } from "@/components/ui/settings-tooltip" // Import SettingsFormContents
 import { AnimatedPlaceholder } from "@/components/ui/animated-placeholder"
+import { useIsMobile } from "frontend/hooks/use-mobile";
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+  DrawerClose, // Import DrawerClose
+} from "frontend/components/ui/drawer";
+import type { ModelOption } from "@/lib/models"; // For availableModels prop
 
 interface MessageInputBaseProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -31,6 +42,14 @@ interface MessageInputBaseProps
   setSelectedModel?: (model: string) => void
   clearMessages?: () => void
   hasMessages?: boolean
+  // Props for SettingsFormContents
+  availableModels?: ModelOption[]
+  isLoadingModels?: boolean
+  modelSearchQuery?: string
+  setModelSearchQuery?: (query: string) => void
+  filteredModels?: ModelOption[]
+  getCurrentProvider?: () => string
+  getCurrentModel?: () => string
 }
 
 interface MessageInputWithoutAttachmentProps extends MessageInputBaseProps {
@@ -56,10 +75,93 @@ export function MessageInput({
   isGenerating,
   enableInterrupt = true,
   transcribeAudio,
+  // Destructure new props for settings form
+  availableModels: propAvailableModels,
+  isLoadingModels: propIsLoadingModels,
+  modelSearchQuery: propModelSearchQuery,
+  setModelSearchQuery: propSetModelSearchQuery,
+  filteredModels: propFilteredModels,
+  getCurrentProvider: propGetCurrentProvider,
+  getCurrentModel: propGetCurrentModel,
   ...props
 }: MessageInputProps) {
+  const isMobile = useIsMobile();
   const [isDragging, setIsDragging] = useState(false)
   const [showInterruptPrompt, setShowInterruptPrompt] = useState(false)
+
+  // State for Drawer's SettingsFormContents instance
+  const [drawerSelectOpen, setDrawerSelectOpen] = useState(false);
+  const drawerSearchInputRef = useRef<HTMLInputElement>(null);
+  
+  // Default model loading and filtering logic for Drawer context (can be adapted if these are passed from parent)
+  // For simplicity, we'll assume if these props are undefined, we use some defaults or manage them internally here.
+  // This part might need adjustment based on where state like availableModels is truly managed for MessageInput.
+  // The SettingsTooltip manages these internally if not provided.
+  // For the drawer, MessageInput needs to provide them to SettingsFormContents.
+
+  const [internalAvailableModels, setInternalAvailableModels] = useState<ModelOption[]>(propAvailableModels || []);
+  const [internalIsLoadingModels, setInternalIsLoadingModels] = useState(propIsLoadingModels || false);
+  const [internalModelSearchQuery, setInternalModelSearchQuery] = useState(propModelSearchQuery || "");
+  
+  // If props for model list management are not passed, these internal ones will be used.
+  // This makes SettingsFormContents flexible.
+  const availableModels = propAvailableModels ?? internalAvailableModels;
+  const isLoadingModels = propIsLoadingModels ?? internalIsLoadingModels;
+  const modelSearchQuery = propModelSearchQuery ?? internalModelSearchQuery;
+  const setModelSearchQuery = propSetModelSearchQuery ?? setInternalModelSearchQuery;
+
+  // This logic should ideally be part of a custom hook or passed down if complex.
+  // For now, replicating a simplified version of filteredModels logic for the drawer context
+  // if not provided directly.
+  const internalFilteredModels = React.useMemo(() => {
+    if (props.provider !== 'openrouter' || !availableModels.length) {
+        return [];
+    }
+    if (!modelSearchQuery.trim()) {
+        return availableModels;
+    }
+    const query = modelSearchQuery.toLowerCase();
+    return availableModels.filter(
+        (model) =>
+            model.name.toLowerCase().includes(query) ||
+            model.id.toLowerCase().includes(query) ||
+            (model.description && model.description.toLowerCase().includes(query))
+    );
+  }, [availableModels, modelSearchQuery, props.provider]);
+
+  const filteredModels = propFilteredModels ?? internalFilteredModels;
+
+  const defaultGetCurrentProvider = () => {
+    if (props.provider === 'google') return 'Google Gemini';
+    return 'OpenRouter';
+  };
+  const getCurrentProvider = propGetCurrentProvider ?? defaultGetCurrentProvider;
+
+  const defaultGetCurrentModel = () => {
+    if (props.provider === 'google') return 'Gemini Pro 1.5'; // Default Google model
+    if (props.provider === 'openrouter' && props.selectedModel) {
+        const model = availableModels.find(m => m.id === props.selectedModel);
+        return model?.name || props.selectedModel.split('/').pop()?.split(':')[0] || 'Default';
+    }
+    return 'Default';
+  };
+  const getCurrentModel = propGetCurrentModel ?? defaultGetCurrentModel;
+
+  // Effect to load models if provider is 'openrouter' and drawer will use internal state
+  // This is only if propAvailableModels is not provided.
+  useEffect(() => {
+    if (props.provider === 'openrouter' && !propAvailableModels && isMobile) { // Only for drawer context if not managed by parent
+      setInternalIsLoadingModels(true);
+      import("@/lib/models").then(module => { // Dynamically import to avoid issues
+        module.getAllModels()
+          .then(setInternalAvailableModels)
+          .catch(error => console.error("Failed to load models for drawer:", error))
+          .finally(() => setInternalIsLoadingModels(false));
+      });
+    } else if (props.provider !== 'openrouter' && !propAvailableModels) {
+        setInternalAvailableModels([]);
+    }
+  }, [props.provider, propAvailableModels, isMobile]);
 
   // Prompt suggestions for the animated placeholder
   const promptSuggestions = [
@@ -355,26 +457,81 @@ export function MessageInput({
           )}
         </AnimatePresence>
         
-        {/* Settings Tooltip */}
+        {/* Settings Tooltip / Drawer */}
         {props.mode && props.setMode && (
-          <SettingsTooltip
-            mode={props.mode}
-            setMode={props.setMode}
-            provider={props.provider}
-            setProvider={props.setProvider}
-            selectedModel={props.selectedModel}
-            setSelectedModel={props.setSelectedModel}
-          >
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              className="h-8 w-8 group"
-              aria-label="Settings"
+          isMobile ? (
+            <Drawer>
+              <DrawerTrigger asChild>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8 group"
+                  aria-label="Settings"
+                >
+                  <Settings className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90 group-hover:scale-110" />
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle>Settings</DrawerTitle>
+                </DrawerHeader>
+                <div className="p-4 overflow-y-auto">
+                  <SettingsFormContents
+                    mode={props.mode}
+                    setMode={props.setMode}
+                    provider={props.provider}
+                    setProvider={props.setProvider}
+                    selectedModel={props.selectedModel}
+                    setSelectedModel={props.setSelectedModel}
+                    availableModels={availableModels}
+                    isLoadingModels={isLoadingModels}
+                    modelSearchQuery={modelSearchQuery}
+                    setModelSearchQuery={setModelSearchQuery}
+                    filteredModels={filteredModels}
+                    getCurrentProvider={getCurrentProvider}
+                    getCurrentModel={getCurrentModel}
+                    selectOpen={drawerSelectOpen}
+                    setSelectOpen={setDrawerSelectOpen}
+                    searchInputRef={drawerSearchInputRef}
+                    // setParentTooltipOpen is not applicable for Drawer
+                  />
+                </div>
+                <DrawerFooter className="pt-2">
+                  <DrawerClose asChild>
+                    <Button variant="outline">Close</Button>
+                  </DrawerClose>
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
+          ) : (
+            <SettingsTooltip
+              mode={props.mode}
+              setMode={props.setMode}
+              provider={props.provider}
+              setProvider={props.setProvider}
+              selectedModel={props.selectedModel}
+              setSelectedModel={props.setSelectedModel}
+              // Pass the model-related props to SettingsTooltip as well
+              availableModels={availableModels}
+              isLoadingModels={isLoadingModels}
+              modelSearchQuery={modelSearchQuery}
+              setModelSearchQuery={setModelSearchQuery}
+              filteredModels={filteredModels}
+              getCurrentProvider={getCurrentProvider}
+              getCurrentModel={getCurrentModel}
             >
-              <Settings className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90 group-hover:scale-110" />
-            </Button>
-          </SettingsTooltip>
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                className="h-8 w-8 group"
+                aria-label="Settings"
+              >
+                <Settings className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90 group-hover:scale-110" />
+              </Button>
+            </SettingsTooltip>
+          )
         )}
         
         {props.allowAttachments && (
