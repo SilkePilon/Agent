@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react" // Added Info and DollarSign icons
-import { Bot, MessageCircle, Settings, ChevronDown, DollarSign, Info } from "lucide-react"
+import { Bot, MessageCircle, Settings, ChevronDown, DollarSign, Info, Search, Loader2 } from "lucide-react"
 import { motion } from "framer-motion"
 import { Gemini, OpenRouter } from '@lobehub/icons'
 
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { getAllModels, type ModelOption } from "@/lib/models"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 
@@ -211,14 +212,39 @@ export function SettingsTooltip({
 }: SettingsTooltipProps) {
     // Wrap everything in a TooltipProvider with a shorter delay for model tooltips
     const [availableModels, setAvailableModels] = React.useState<ModelOption[]>([])
+    const [isLoadingModels, setIsLoadingModels] = React.useState(false);
     const [isOpen, setIsOpen] = React.useState(false)
     const [selectOpen, setSelectOpen] = React.useState(false)
+    const [modelSearchQuery, setModelSearchQuery] = React.useState("");
 
     React.useEffect(() => {
         if (provider === 'openrouter') {
-            getAllModels().then(setAvailableModels)
+            setIsLoadingModels(true);
+            getAllModels()
+                .then(setAvailableModels)
+                .catch(error => {
+                    console.error("Failed to load models:", error)
+                    // Optionally, set an error state here to display to the user
+                })
+                .finally(() => setIsLoadingModels(false));
         }
     }, [provider])
+
+    const filteredModels = React.useMemo(() => {
+        if (provider !== 'openrouter' || !availableModels.length) {
+            return [];
+        }
+        if (!modelSearchQuery.trim()) {
+            return availableModels;
+        }
+        const query = modelSearchQuery.toLowerCase();
+        return availableModels.filter(
+            (model) =>
+                model.name.toLowerCase().includes(query) ||
+                model.id.toLowerCase().includes(query) ||
+                (model.description && model.description.toLowerCase().includes(query))
+        );
+    }, [availableModels, modelSearchQuery, provider]);
 
     // Custom close handler that considers select state
     const handleOpenChange = React.useCallback((newOpen: boolean) => {
@@ -227,6 +253,9 @@ export function SettingsTooltip({
             return
         }
         setIsOpen(newOpen)
+        if (!newOpen) { // Clear search when main tooltip closes
+            setModelSearchQuery("");
+        }
     }, [selectOpen])
 
     const getCurrentProvider = () => {
@@ -350,22 +379,67 @@ export function SettingsTooltip({
                                 <SelectTrigger className="h-8 text-xs w-full">
                                     <SelectValue placeholder="Select a model" />
                                 </SelectTrigger>
-                                <SelectContent
+                                <SelectContent // The Viewport inside SelectContent has p-1 by default.
                                     className="max-h-64"
                                     side="bottom"
                                     align="start"
                                     style={{ width: 'var(--radix-select-trigger-width)' }}
+                                    // Prevent main tooltip from closing when select content is interacted with or select closes
+                                    onCloseAutoFocus={(e) => e.preventDefault()}
                                 >
-                                    {availableModels.map((model) => {
-                                        return (<SelectItem
-                                            key={model.id}
-                                            value={model.id}
-                                            className="text-xs text-left relative"
-                                        >
-                                            <ModelItemContent model={model} />
-                                        </SelectItem>
-                                        )
-                                    })}
+                                    {/* Search input container - sticky within the viewport */}
+                                    <div 
+                                        className="p-2 bg-popover -mx-1 -mt-1 mb-1 border-b"
+                                        // Prevent clicks on padding around search from stealing focus
+                                        onMouseDown={(e) => e.preventDefault()}
+                                    >
+                                        <div className="relative">
+                                            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                            <Input
+                                                type="search"
+                                                placeholder="Search models..."
+                                                value={modelSearchQuery}
+                                                onChange={(e) => setModelSearchQuery(e.target.value)}
+                                                onClick={(e) => e.stopPropagation()} // Prevent select from closing
+                                                onFocus={(e) => e.stopPropagation()}  // Prevent select from closing
+                                                onKeyDown={(e) => {
+                                                    // Handle Escape key to clear search and prevent default/propagation
+                                                    if (e.key === 'Escape') {
+                                                      if (modelSearchQuery) {
+                                                        setModelSearchQuery('');
+                                                      }
+                                                      e.preventDefault(); // Prevent default Escape behavior (e.g., closing dialog)
+                                                      e.stopPropagation(); // Stop propagation to parent
+                                                      return; // Exit after handling Escape
+                                                    }
+                                                    // For all other keys, stop propagation to ensure the input
+                                                    // field has full control and parent components don't interfere.
+                                                    e.stopPropagation();
+                                                }}
+                                                className="h-8 text-xs w-full pl-8" // Padding for the icon
+                                            />
+                                        </div>
+                                    </div>
+                                    {isLoadingModels ? (
+                                        <div className="flex items-center justify-center p-4 text-xs text-muted-foreground">
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            Loading models...
+                                        </div>
+                                    ) : filteredModels.length > 0 ? (
+                                        filteredModels.map((model) => (
+                                            <SelectItem
+                                                key={model.id}
+                                                value={model.id}
+                                                className="text-xs text-left relative"
+                                            >
+                                                <ModelItemContent model={model} />
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <div className="p-2 text-center text-xs text-muted-foreground">
+                                            No models found.
+                                        </div>
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>
