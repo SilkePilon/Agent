@@ -216,6 +216,7 @@ export function SettingsTooltip({
     const [isOpen, setIsOpen] = React.useState(false)
     const [selectOpen, setSelectOpen] = React.useState(false)
     const [modelSearchQuery, setModelSearchQuery] = React.useState("");
+    const searchInputRef = React.useRef<HTMLInputElement>(null);
 
     React.useEffect(() => {
         if (provider === 'openrouter') {
@@ -248,15 +249,20 @@ export function SettingsTooltip({
 
     // Custom close handler that considers select state
     const handleOpenChange = React.useCallback((newOpen: boolean) => {
-        // Don't close if select is open
-        if (!newOpen && selectOpen) {
-            return
+        if (!newOpen) { // If trying to close the main tooltip
+            if (selectOpen) { // If select dropdown is still open, don't close main tooltip
+                return;
+            }
+            // If the search input is focused, don't close the main tooltip yet.
+            // This can happen if the Select closes itself but focus remains (or is restored to) the input.
+            if (document.activeElement === searchInputRef.current) {
+                return;
+            }
+            setModelSearchQuery(""); // Clear search when main tooltip actually closes
         }
-        setIsOpen(newOpen)
-        if (!newOpen) { // Clear search when main tooltip closes
-            setModelSearchQuery("");
-        }
-    }, [selectOpen])
+        setIsOpen(newOpen);
+    }, [selectOpen, searchInputRef]);
+
 
     const getCurrentProvider = () => {
         if (provider === 'google') return 'Google Gemini'
@@ -369,10 +375,19 @@ export function SettingsTooltip({
                                 value={selectedModel}
                                 onValueChange={setSelectedModel}
                                 onOpenChange={(open) => {
-                                    setSelectOpen(open)
-                                    // Keep tooltip open when select opens
                                     if (open) {
-                                        setIsOpen(true)
+                                        setSelectOpen(true);
+                                        setIsOpen(true); // Ensure main tooltip stays open
+                                        // Focus the search input when the select opens
+                                        setTimeout(() => searchInputRef.current?.focus(), 0);
+                                    } else {
+                                        setSelectOpen(false);
+                                        // If select closes and search input was focused, try to keep focus on it.
+                                        // This helps prevent the main tooltip from closing immediately if the
+                                        // select closed due to filtering (e.g., no results).
+                                        if (document.activeElement === searchInputRef.current || searchInputRef.current?.value) {
+                                            setTimeout(() => searchInputRef.current?.focus(), 0);
+                                        }
                                     }
                                 }}
                             >
@@ -387,15 +402,13 @@ export function SettingsTooltip({
                                     // Prevent main tooltip from closing when select content is interacted with or select closes
                                     onCloseAutoFocus={(e) => e.preventDefault()}
                                 >
-                                    {/* Search input container - sticky within the viewport */}
                                     <div 
                                         className="p-2 bg-popover -mx-1 -mt-1 mb-1 border-b"
-                                        // Prevent clicks on padding around search from stealing focus
-                                        onMouseDown={(e) => e.preventDefault()}
                                     >
                                         <div className="relative">
                                             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                                             <Input
+                                                ref={searchInputRef}
                                                 type="search"
                                                 placeholder="Search models..."
                                                 value={modelSearchQuery}
@@ -403,17 +416,21 @@ export function SettingsTooltip({
                                                 onClick={(e) => e.stopPropagation()} // Prevent select from closing
                                                 onFocus={(e) => e.stopPropagation()}  // Prevent select from closing
                                                 onKeyDown={(e) => {
-                                                    // Handle Escape key to clear search and prevent default/propagation
                                                     if (e.key === 'Escape') {
-                                                      if (modelSearchQuery) {
-                                                        setModelSearchQuery('');
-                                                      }
-                                                      e.preventDefault(); // Prevent default Escape behavior (e.g., closing dialog)
-                                                      e.stopPropagation(); // Stop propagation to parent
-                                                      return; // Exit after handling Escape
+                                                        e.stopPropagation(); // Stop propagation to Select/Tooltip
+                                                        if (modelSearchQuery) {
+                                                            setModelSearchQuery('');
+                                                            e.preventDefault(); // Prevent default if we cleared search
+                                                        }
+                                                        // If query was empty, Escape might be intended for the Select itself (to close)
+                                                        // The stopPropagation above prevents it from closing the main tooltip.
+                                                        return;
                                                     }
-                                                    // For all other keys, stop propagation to ensure the input
-                                                    // field has full control and parent components don't interfere.
+                                                    // Stop propagation for navigation keys to prevent Select component from acting on them
+                                                    if (['ArrowUp', 'ArrowDown', 'Enter', 'Home', 'End', 'PageUp', 'PageDown', 'Tab'].includes(e.key)) {
+                                                        e.stopPropagation();
+                                                    }
+                                                    // For other keys (alphanumeric, backspace), allow default and bubbling.
                                                     e.stopPropagation();
                                                 }}
                                                 className="h-8 text-xs w-full pl-8" // Padding for the icon
