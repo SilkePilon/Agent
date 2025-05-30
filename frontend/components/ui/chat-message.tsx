@@ -322,10 +322,8 @@ interface ModelBadgeProps {
 }
 
 const ModelBadge: React.FC<ModelBadgeProps> = ({ modelId, modelProvider }) => {
-  // Only render if we have valid provider and model information
-  if (!modelProvider || !modelId) {
-    return null;
-  }
+  // Temporary debug - let's see what we're getting
+  console.log('ModelBadge received:', { modelId, modelProvider });
   
   return (
     <motion.div 
@@ -343,9 +341,11 @@ const ModelBadge: React.FC<ModelBadgeProps> = ({ modelId, modelProvider }) => {
         <Gemini className="h-3 w-3 text-purple-600" />
       ) : modelProvider === 'openrouter' ? (
         <OpenRouter className="h-3 w-3 text-[#6467f2]" />
-      ) : null}
+      ) : (
+        <div className="h-3 w-3 bg-gray-400 rounded" />
+      )}
       <span className="text-muted-foreground font-medium text-[10px]">
-        {modelId}
+        {modelId || 'No Model'} ({modelProvider || 'No Provider'})
       </span>
     </motion.div>
   );
