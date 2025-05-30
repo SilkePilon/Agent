@@ -37,21 +37,7 @@ export function TypingIndicator({ mode = 'chat' }: TypingIndicatorProps) {
       }}
     >
       <div className="flex items-start space-x-3">
-        {/* AI Avatar */}
-        <motion.div 
-          className={`flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full border ${colorScheme.avatarBg} ${colorScheme.avatarText} shadow-sm`}
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          transition={{ 
-            type: "spring", 
-            stiffness: 300, 
-            damping: 25,
-            delay: 0.1 
-          }}
-        >
-          <Bot className="h-4 w-4" />
-        </motion.div>
-
+      
         {/* Chat Bubble with Typing Animation */}
         <motion.div 
           className="group relative rounded-2xl bg-muted px-4 py-3 shadow-sm border"
