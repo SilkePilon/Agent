@@ -14,7 +14,7 @@ import { FilePreview } from "@/components/ui/file-preview"
 import { InterruptPrompt } from "@/components/ui/interrupt-prompt"
 import { SettingsTooltip, SettingsFormContents } from "@/components/ui/settings-tooltip" // Import SettingsFormContents
 import { AnimatedPlaceholder } from "@/components/ui/animated-placeholder"
-import { useIsMobile } from "frontend/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile"; // Changed path
 import {
   Drawer,
   DrawerTrigger,
@@ -23,7 +23,7 @@ import {
   DrawerTitle,
   DrawerFooter,
   DrawerClose, // Import DrawerClose
-} from "frontend/components/ui/drawer";
+} from "@/components/ui/drawer"; // Changed path
 import type { ModelOption } from "@/lib/models"; // For availableModels prop
 
 interface MessageInputBaseProps
