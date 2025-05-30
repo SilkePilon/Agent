@@ -24,6 +24,7 @@ interface ChatMessagesProps {
   setMode?: (mode: 'agent' | 'chat') => void
   append?: (message: { role: "user"; content: string }) => void
   stop?: () => void
+  isLoading?: boolean; // Added isLoading prop
 }
 
 export function ChatMessages({
@@ -35,6 +36,7 @@ export function ChatMessages({
   setMode,
   append,
   stop,
+  isLoading, // Destructure isLoading
 }: ChatMessagesProps) {
   const lastMessage = messages.at(-1)
   const isTyping = lastMessage?.role === "user"
@@ -167,6 +169,13 @@ export function ChatMessages({
     shouldAutoScroll,
     handleTouchStart,
   } = useAutoScroll([messages, lastMessageContent]) // Add lastMessageContent to dependencies
+
+  // New useEffect for streaming scroll
+  React.useEffect(() => {
+    if (isLoading && shouldAutoScroll) {
+      scrollToBottom();
+    }
+  }, [lastMessageContent, isLoading, scrollToBottom, shouldAutoScroll]);
 
   if (messages.length === 0) {
     return null

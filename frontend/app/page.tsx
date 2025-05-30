@@ -115,6 +115,7 @@ export default function Home() {
                 stop={stop}
                 mode={mode}
                 setMode={setMode}
+                isLoading={isLoading} // Add isLoading prop
               />
             </div>
           </motion.div>
