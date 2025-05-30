@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Bot, MessageCircle, Settings, ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Gemini, OpenRouter } from '@lobehub/icons'
 
 import { cn } from "@/lib/utils"
 import { getAllModels, type ModelOption } from "@/lib/models"
@@ -206,33 +207,38 @@ export function SettingsTooltip({
           {provider && setProvider && (
             <div className="space-y-2">
               <div className="text-xs font-medium text-muted-foreground">Provider</div>
-              <div className="flex gap-1">
-                <Button
+              <div className="flex gap-1">                <Button
                   variant={provider === 'google' ? 'default' : 'outline'}
                   size="sm"
                   className={cn(
                     "flex-1 h-8 text-xs transition-all duration-200",
                     provider === 'google' 
-                      ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
-                      : "hover:bg-muted text-foreground"
+                      ? "bg-purple-600 hover:bg-purple-700 text-white" 
+                      : "hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 text-foreground"
                   )}
                   onClick={() => setProvider?.('google')}
                 >
+                  <Gemini className={cn(
+                    "h-3.5 w-3.5 mr-1", 
+                    provider !== 'google' && "text-purple-600"
+                  )} />
                   Gemini
-                </Button>
-                <Button
+                </Button>                <Button
                   variant={provider === 'openrouter' ? 'default' : 'outline'}
                   size="sm"
                   className={cn(
                     "flex-1 h-8 text-xs transition-all duration-200",
                     provider === 'openrouter' 
-                      ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
-                      : "hover:bg-muted text-foreground"
+                      ? "bg-orange-500 hover:bg-orange-600 text-white" 
+                      : "hover:bg-orange-50 hover:text-orange-500 hover:border-orange-200 text-foreground"
                   )}
-                  onClick={() => setProvider?.('openrouter')}
-                >
+                  onClick={() => setProvider?.('openrouter')}                >
+                  <OpenRouter className={cn(
+                    "h-3.5 w-3.5 mr-1", 
+                    provider !== 'openrouter' && "text-orange-500"
+                  )} />
                   OpenRouter
-                </Button>              </div>
+                </Button></div>
             </div>
           )}
 
