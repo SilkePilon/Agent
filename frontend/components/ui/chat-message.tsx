@@ -179,7 +179,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   if (isUser) {
     return (
       <div
-        className={cn("flex flex-col w-full max-w-full overflow-x-hidden", isUser ? "items-end" : "items-start")}
+        className={cn("flex flex-col w-full max-w-full overflow-x-hidden", isUser ? "items-end pr-4" : "items-start pl-4")}
       >
         {files ? (
           <div className="mb-1 flex flex-wrap gap-2">
@@ -215,7 +215,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           <div
             className={cn(
               "flex flex-col w-full max-w-full overflow-x-hidden",
-              isUser ? "items-end" : "items-start"
+              isUser ? "items-end pr-4" : "items-start pl-4"
             )}
             key={`text-${index}`}
           >

@@ -8,7 +8,7 @@ import { ChatInput } from "@/components/ui/chat-input"
 import { type Message } from "@/components/ui/chat-message"
 
 export default function Home() {
-  const [mode, setMode] = useState<'agent' | 'chat'>('agent');
+  const [mode, setMode] = useState<'agent' | 'chat'>('chat');
   const [fallbackActive, setFallbackActive] = useState(false);
   const [provider, setProvider] = useState<'openrouter' | 'google'>('openrouter');
   const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash-preview-05-20:thinking');
@@ -84,7 +84,7 @@ export default function Home() {
       <AnimatePresence>
         {messages.length > 0 && (
           <motion.div
-            className="flex-1 flex justify-center px-4 pt-8 pb-32 overflow-y-auto overflow-x-hidden"
+            className="flex-1 flex justify-center px-2 pt-8 pb-32 overflow-hidden message-container"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}

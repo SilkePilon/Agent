@@ -120,4 +120,77 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Smooth scrolling and stable scrollbar */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Hide all vertical scrollbars globally */
+  * {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+  
+  /* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+  *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+  
+  /* Specifically hide scrollbars in message containers */
+  .message-container,
+  .message-container *,
+  .chat-container,
+  .chat-container *,
+  .message-list,
+  .message-list *,
+  .message-list-container,
+  .message-list-container * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  
+  .message-container::-webkit-scrollbar,
+  .message-container *::-webkit-scrollbar,
+  .chat-container::-webkit-scrollbar,
+  .chat-container *::-webkit-scrollbar,
+  .message-list::-webkit-scrollbar,
+  .message-list *::-webkit-scrollbar,
+  .message-list-container::-webkit-scrollbar,
+  .message-list-container *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  
+  /* Ensure scrolling still works */
+  html, body {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  
+  /* Hide scrollbars for specific elements that might show them */
+  .scroll-area, .overflow-y-auto, .overflow-auto {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .scroll-area::-webkit-scrollbar,
+  .overflow-y-auto::-webkit-scrollbar,
+  .overflow-auto::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Prevent scrollbar jumping */
+  .scroll-container {
+    scrollbar-gutter: stable;
+    overflow-anchor: auto;
+  }
+  
+  /* Hide scrollbar during animations to prevent flicker */
+  .animating-height {
+    overflow-y: hidden !important;
+  }
 }

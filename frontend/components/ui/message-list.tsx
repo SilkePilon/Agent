@@ -30,7 +30,7 @@ export function MessageList({
   append,
 }: MessageListProps) {
   return (
-    <div className="space-y-4 overflow-x-hidden w-full max-w-full">
+    <div className="space-y-4 overflow-hidden w-full max-w-full message-list-container">
       <AnimatePresence mode="popLayout">
         {messages.map((message, index) => {
           const additionalOptions =
@@ -58,10 +58,10 @@ export function MessageList({
               }}
               transition={{
                 type: "spring",
-                stiffness: 400,
-                damping: 25,
-                duration: 0.4,
-                delay: index * 0.1
+                stiffness: 500,
+                damping: 30,
+                duration: 0.3,
+                delay: index * 0.05
               }}
               layout
             >

@@ -170,10 +170,9 @@ export function ChatMessages({
   if (messages.length === 0) {
     return null
   }
-
   return (
     <motion.div
-      className={cn("flex flex-col h-full", className)}
+      className={cn("flex flex-col h-full chat-container", className)}
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -50 }}
@@ -184,7 +183,7 @@ export function ChatMessages({
         duration: 0.6
       }}
     >      <div
-        className="grid grid-cols-1 overflow-y-auto overflow-x-hidden pb-4 flex-1"
+        className="grid grid-cols-1 overflow-hidden pb-4 flex-1 message-list"
         ref={containerRef}
         onScroll={handleScroll}
         onTouchStart={handleTouchStart}
