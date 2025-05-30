@@ -448,11 +448,13 @@ export function ModelSelector({ selectedModel, onModelSelect, provider, children
   }, [selectedModel, models])
 
   const triggerButton = children || (
-    <Button variant="outline" className="justify-between">
-      <span className="truncate">{selectedModelName}</span>
-      <ChevronDown className="h-4 w-4 ml-2 flex-shrink-0" />
-    </Button>
-  )
+        <Button 
+            variant="outline" 
+            className="justify-between text-foreground truncate overflow-hidden text-ellipsis">
+          <span className="truncate">{selectedModelName}</span>
+          <ChevronDown className="h-4 w-4 ml-2 flex-shrink-0" />
+        </Button>
+    )
   const content = (
     <ModelSelectorContent
       models={models}
