@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { Send, ThumbsUp, ThumbsDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -57,10 +58,8 @@ const FeedbackFormContent = React.memo(
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <motion.div 
+        >          <motion.div 
             className="flex-1"
-            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             animate={currentFeedbackType === "thumbs-up" ? { scale: 1.05 } : { scale: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -76,30 +75,26 @@ const FeedbackFormContent = React.memo(
                   : "hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400"
               )}
               onClick={() => handleFeedbackTypeChange("thumbs-up")}
-            >
-              <motion.div 
+            >              <motion.div 
                 layout 
                 className="flex items-center justify-center gap-2"
-                animate={currentFeedbackType === "thumbs-up" ? { 
-                  rotateY: [0, 360],
-                  transition: { duration: 0.5, ease: "easeInOut" }
-                } : {}}
-              >
-                <motion.div
+              >                <motion.div
                   animate={currentFeedbackType === "thumbs-up" ? { 
                     rotate: [0, 10, -10, 0],
                     transition: { duration: 0.4, ease: "easeInOut" }
                   } : {}}
+                  whileHover={{ 
+                    y: -2,
+                    transition: { type: "spring", stiffness: 400, damping: 25 }
+                  }}
                 >
                   <ThumbsUp className="h-4 w-4" />
                 </motion.div>
                 Helpful
               </motion.div>
             </Button>
-          </motion.div>
-          <motion.div 
+          </motion.div>          <motion.div 
             className="flex-1"
-            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             animate={currentFeedbackType === "thumbs-down" ? { scale: 1.05 } : { scale: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -115,20 +110,18 @@ const FeedbackFormContent = React.memo(
                   : "hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
               )}
               onClick={() => handleFeedbackTypeChange("thumbs-down")}
-            >
-              <motion.div 
+            >              <motion.div 
                 layout 
                 className="flex items-center justify-center gap-2"
-                animate={currentFeedbackType === "thumbs-down" ? { 
-                  rotateY: [0, 360],
-                  transition: { duration: 0.5, ease: "easeInOut" }
-                } : {}}
-              >
-                <motion.div
+              >                <motion.div
                   animate={currentFeedbackType === "thumbs-down" ? { 
                     rotate: [0, -10, 10, 0],
                     transition: { duration: 0.4, ease: "easeInOut" }
                   } : {}}
+                  whileHover={{ 
+                    y: -2,
+                    transition: { type: "spring", stiffness: 400, damping: 25 }
+                  }}
                 >
                   <ThumbsDown className="h-4 w-4" />
                 </motion.div>
@@ -160,10 +153,8 @@ const FeedbackFormContent = React.memo(
           className="flex justify-end gap-2"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.3 }}
-        >
+          transition={{ duration: 0.3, delay: 0.3 }}        >
           <motion.div
-            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
           >
@@ -176,9 +167,7 @@ const FeedbackFormContent = React.memo(
             >
               Cancel
             </Button>
-          </motion.div>
-          <motion.div
-            whileHover={{ scale: 1.05 }}
+          </motion.div>          <motion.div
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
           >
@@ -191,31 +180,38 @@ const FeedbackFormContent = React.memo(
               <AnimatePresence mode="wait">
                 {isSubmitting ? (
                   <motion.div
-                    key="spinner"
-                    initial={{ opacity: 0, y: -10, rotate: 0 }}
-                    animate={{ opacity: 1, y: 0, rotate: 360 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ 
-                      opacity: { duration: 0.15 },
-                      y: { duration: 0.15 },
-                      rotate: { duration: 1, repeat: Infinity, ease: "linear" }
-                    }}
-                    className="flex items-center justify-center"
+                    key="sending"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center justify-center gap-1.5"
                   >
-                    <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ 
+                        duration: 1, 
+                        repeat: Infinity, 
+                        ease: "linear" 
+                      }}
+                      className="h-4 w-4 border-2 border-current border-t-transparent rounded-full"
+                    />
+                    Sending...
                   </motion.div>
                 ) : (
                   <motion.div
                     key="send-icon"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ duration: 0.15 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.2 }}
                     className="flex items-center justify-center gap-1.5"
-                  >
-                    <motion.div
-                      whileHover={{ x: 2 }}
-                      transition={{ type: "spring", stiffness: 400 }}
+                  >                    <motion.div
+                      whileHover={{ 
+                        x: 2,
+                        y: -1,
+                        transition: { type: "spring", stiffness: 400, damping: 25 }
+                      }}
                     >
                       <Send className="h-4 w-4" />
                     </motion.div>
@@ -223,7 +219,7 @@ const FeedbackFormContent = React.memo(
                   </motion.div>
                 )}
               </AnimatePresence>
-            </Button>          </motion.div>
+            </Button></motion.div>
         </motion.div>
       </motion.div>
     )
@@ -287,17 +283,31 @@ export function FeedbackDialog({
   const handleCloseDialog = useCallback(() => {
     stableOnClose()
   }, [stableOnClose])
-
   const handleSubmitFeedback = useCallback(async () => {
     if (!feedbackText.trim()) return
 
     setIsSubmitting(true)
     try {
+      // Call the actual submit function
       await stableOnSubmit(feedbackText, currentFeedbackType)
+      
+      // Add a 2-second delay to show the loading state
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Show success toast
+      toast.success("Feedback submitted successfully!", {
+        description: "Thank you for helping us improve our responses.",
+        duration: 4000,
+      })
+      
+      // Close the dialog
       handleCloseDialog()
     } catch (error) {
       console.error("Failed to submit feedback:", error)
-      // Optionally show an error to the user
+      toast.error("Failed to submit feedback", {
+        description: "Please try again later.",
+        duration: 4000,
+      })
     } finally {
       setIsSubmitting(false)
     }
