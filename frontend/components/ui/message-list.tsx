@@ -42,29 +42,9 @@ export function MessageList({
             <motion.div
               key={`${message.id}-${index}`}
               layout
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ 
-                opacity: 1, 
-                y: 0, 
-                scale: 1,
-                transition: {
-                  type: "spring",
-                  stiffness: 400,
-                  damping: 25,
-                  duration: 0.6
-                }
-              }}
-              exit={{ 
-                opacity: 0, 
-                y: -20, 
-                scale: 0.95,
-                transition: {
-                  type: "spring",
-                  stiffness: 500,
-                  damping: 35,
-                  duration: 0.4
-                }
-              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, transition: { duration: 0.2 } }}
+              exit={{ opacity: 0, transition: { duration: 0.1 } }}
             >
               <ChatMessage
                 showTimeStamp={showTimeStamps}

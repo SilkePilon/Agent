@@ -331,16 +331,8 @@ const ModelBadge: React.FC<ModelBadgeProps> = ({ modelId, modelProvider }) => {
   }
   
   return (
-    <motion.div 
+    <div 
       className="flex items-center gap-1.5 text-xs mt-2 px-2 py-1 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit opacity-75"
-      initial={{ opacity: 0, y: -5 }}
-      animate={{ opacity: 0.75, y: 0 }}
-      transition={{ 
-        type: "spring", 
-        stiffness: 500, 
-        damping: 30,
-        delay: 0.1
-      }}
     >
       {modelProvider === 'google' ? (
         <Gemini className="h-3 w-3 text-purple-600" />
@@ -350,7 +342,7 @@ const ModelBadge: React.FC<ModelBadgeProps> = ({ modelId, modelProvider }) => {
       <span className="text-muted-foreground font-medium text-[10px]">
         {modelId}
       </span>
-    </motion.div>
+    </div>
   );
 };
 
