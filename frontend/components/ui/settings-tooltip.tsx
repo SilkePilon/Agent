@@ -235,6 +235,8 @@ interface SettingsTooltipProps {
     selectedModel?: string
     setSelectedModel?: (model: string) => void
     children: React.ReactNode
+    messageActionsAlwaysVisible?: boolean
+    setMessageActionsAlwaysVisible?: (value: boolean) => void
     // Props for SettingsFormContents that might be managed by SettingsTooltip
     availableModels?: ModelOption[]
     isLoadingModels?: boolean
@@ -256,6 +258,8 @@ interface SettingsFormContentsProps {
     setProvider?: (provider: 'openrouter' | 'google') => void
     selectedModel?: string
     setSelectedModel?: (model: string) => void
+    messageActionsAlwaysVisible?: boolean
+    setMessageActionsAlwaysVisible?: (value: boolean) => void
     availableModels: ModelOption[]
     isLoadingModels: boolean
     modelSearchQuery: string
@@ -278,6 +282,8 @@ export function SettingsFormContents({
     setProvider,
     selectedModel,
     setSelectedModel,
+    messageActionsAlwaysVisible = false,
+    setMessageActionsAlwaysVisible,
     availableModels,
     isLoadingModels,
     modelSearchQuery,
@@ -456,6 +462,40 @@ export function SettingsFormContents({
                             )}
                         </SelectContent>
                     </Select>
+                </div>            )}
+
+            {/* Message Actions Visibility Setting */}
+            {setMessageActionsAlwaysVisible && (
+                <div className="space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">Message Actions</div>
+                    <div className="flex gap-1">
+                        <Button
+                            variant={messageActionsAlwaysVisible ? 'default' : 'outline'}
+                            size="sm"
+                            className={cn(
+                                "flex-1 h-8 text-xs transition-all duration-200",
+                                messageActionsAlwaysVisible
+                                    ? "bg-green-500 hover:bg-green-600 text-white shadow-sm"
+                                    : "hover:bg-green-50 hover:text-green-600 hover:border-green-200 text-foreground"
+                            )}
+                            onClick={() => setMessageActionsAlwaysVisible(true)}
+                        >
+                            Always Visible
+                        </Button>
+                        <Button
+                            variant={!messageActionsAlwaysVisible ? 'default' : 'outline'}
+                            size="sm"
+                            className={cn(
+                                "flex-1 h-8 text-xs transition-all duration-200",
+                                !messageActionsAlwaysVisible
+                                    ? "bg-blue-500 hover:bg-blue-600 text-white shadow-sm"
+                                    : "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-foreground"
+                            )}
+                            onClick={() => setMessageActionsAlwaysVisible(false)}
+                        >
+                            On Hover
+                        </Button>
+                    </div>
                 </div>
             )}
 
@@ -492,6 +532,8 @@ export function SettingsTooltip({
     selectedModel,
     setSelectedModel,
     children,
+    messageActionsAlwaysVisible = false,
+    setMessageActionsAlwaysVisible,
 }: SettingsTooltipProps) {
     const [availableModels, setAvailableModels] = React.useState<ModelOption[]>([])
     const [isLoadingModels, setIsLoadingModels] = React.useState(false);
@@ -561,14 +603,15 @@ export function SettingsTooltip({
                 side="top"
                 className="w-72 p-0 bg-background border border-border shadow-md rounded-lg overflow-hidden"
                 sideOffset={8}
-            >
-                <SettingsFormContents
+            >                <SettingsFormContents
                     mode={mode}
                     setMode={setMode}
                     provider={provider}
                     setProvider={setProvider}
                     selectedModel={selectedModel}
                     setSelectedModel={setSelectedModel}
+                    messageActionsAlwaysVisible={messageActionsAlwaysVisible}
+                    setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}
                     availableModels={availableModels}
                     isLoadingModels={isLoadingModels}
                     modelSearchQuery={modelSearchQuery}

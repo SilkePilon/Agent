@@ -42,6 +42,8 @@ interface MessageInputBaseProps
   setSelectedModel?: (model: string) => void
   clearMessages?: () => void
   hasMessages?: boolean
+  messageActionsAlwaysVisible?: boolean
+  setMessageActionsAlwaysVisible?: (value: boolean) => void
   // Props for SettingsFormContents
   availableModels?: ModelOption[]
   isLoadingModels?: boolean
@@ -75,6 +77,8 @@ export function MessageInput({
   isGenerating,
   enableInterrupt = true,
   transcribeAudio,
+  messageActionsAlwaysVisible = false,
+  setMessageActionsAlwaysVisible,
   // Destructure new props for settings form
   availableModels: propAvailableModels,
   isLoadingModels: propIsLoadingModels,
@@ -476,8 +480,7 @@ export function MessageInput({
                 <DrawerHeader>
                   <DrawerTitle>Settings</DrawerTitle>
                 </DrawerHeader>
-                <div className="p-4 overflow-y-auto">
-                  <SettingsFormContents
+                <div className="p-4 overflow-y-auto">                  <SettingsFormContents
                     mode={props.mode}
                     setMode={props.setMode}
                     provider={props.provider}
@@ -494,6 +497,8 @@ export function MessageInput({
                     selectOpen={drawerSelectOpen}
                     setSelectOpen={setDrawerSelectOpen}
                     searchInputRef={drawerSearchInputRef}
+                    messageActionsAlwaysVisible={messageActionsAlwaysVisible}
+                    setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}
                     // setParentTooltipOpen is not applicable for Drawer
                   />
                 </div>
@@ -504,8 +509,7 @@ export function MessageInput({
                 </DrawerFooter>
               </DrawerContent>
             </Drawer>
-          ) : (
-            <SettingsTooltip
+          ) : (            <SettingsTooltip
               mode={props.mode}
               setMode={props.setMode}
               provider={props.provider}
@@ -520,6 +524,8 @@ export function MessageInput({
               filteredModels={filteredModels}
               getCurrentProvider={getCurrentProvider}
               getCurrentModel={getCurrentModel}
+              messageActionsAlwaysVisible={messageActionsAlwaysVisible}
+              setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}
             >
               <Button
                 type="button"

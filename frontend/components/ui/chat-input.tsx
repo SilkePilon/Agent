@@ -28,6 +28,8 @@ interface ChatInputProps {
   isFocused?: boolean
   setIsFocused?: (focused: boolean) => void
   clearMessages?: () => void
+  messageActionsAlwaysVisible?: boolean
+  setMessageActionsAlwaysVisible?: (value: boolean) => void
 }
 
 function createFileList(files: File[] | FileList): FileList {
@@ -56,6 +58,8 @@ export function ChatInput({
   setIsFocused,
   clearMessages,
   className,
+  messageActionsAlwaysVisible = false,
+  setMessageActionsAlwaysVisible,
 }: ChatInputProps) {
   const [files, setFiles] = useState<File[] | null>(null)
   const onSubmit = (event: React.FormEvent) => {
@@ -160,6 +164,8 @@ export function ChatInput({
           hasMessages={hasMessages}
           onFocus={() => setIsFocused?.(true)}
           onBlur={() => setIsFocused?.(false)}
+          messageActionsAlwaysVisible={messageActionsAlwaysVisible}
+          setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}
         />
       </form>
     </motion.div>

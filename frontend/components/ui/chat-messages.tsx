@@ -33,6 +33,7 @@ interface ChatMessagesProps {
   stop?: () => void
   submittedFeedback?: Record<string, "thumbs-up" | "thumbs-down">
   onFeedbackSubmitted?: (messageId: string, feedback: "thumbs-up" | "thumbs-down") => void
+  messageActionsAlwaysVisible?: boolean
 }
 
 export function ChatMessages({
@@ -48,6 +49,7 @@ export function ChatMessages({
   stop,
   submittedFeedback = {},
   onFeedbackSubmitted,
+  messageActionsAlwaysVisible = false,
 }: ChatMessagesProps) {
   const [feedbackDialog, setFeedbackDialog] = useState<{
     isOpen: boolean
@@ -305,14 +307,14 @@ export function ChatMessages({
         onScroll={handleScroll}
         onTouchStart={handleTouchStart}
       >
-        <div className="max-w-full [grid-column:1/1] [grid-row:1/1]">
-          <MessageList
+        <div className="max-w-full [grid-column:1/1] [grid-row:1/1]">          <MessageList
             messages={messages}
             isTyping={isTyping}
             messageOptions={messageOptions}
             mode={mode}
             setMode={setMode}
             append={append}
+            messageActionsAlwaysVisible={messageActionsAlwaysVisible}
           />
         </div>
 

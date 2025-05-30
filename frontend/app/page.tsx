@@ -13,6 +13,7 @@ export default function Home() {
   const [provider, setProvider] = useState<'openrouter' | 'google'>('google');
   const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash-preview-05-20');
   const [isFocused, setIsFocused] = useState(false);
+  const [messageActionsAlwaysVisible, setMessageActionsAlwaysVisible] = useState(false);
   const retryAttemptRef = useRef(false);
   
   // Track submitted feedback for each message
@@ -167,14 +168,14 @@ export default function Home() {
                 setMessages={setMessages as any}
                 submittedFeedback={submittedFeedback}
                 onFeedbackSubmitted={handleFeedbackSubmitted}
+                messageActionsAlwaysVisible={messageActionsAlwaysVisible}
               />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Chat Input Container - moves from center to bottom */}
-      <ChatInput
+      {/* Chat Input Container - moves from center to bottom */}      <ChatInput
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={enhancedHandleSubmit}
@@ -190,6 +191,8 @@ export default function Home() {
         isFocused={isFocused}
         setIsFocused={setIsFocused}
         clearMessages={clearMessages}
+        messageActionsAlwaysVisible={messageActionsAlwaysVisible}
+        setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}
       />
     </motion.div>
   );

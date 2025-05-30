@@ -18,6 +18,7 @@ interface MessageListProps {
   mode?: 'agent' | 'chat'
   setMode?: (mode: 'agent' | 'chat') => void
   append?: (message: { role: "user"; content: string }) => void
+  messageActionsAlwaysVisible?: boolean
 }
 
 export function MessageList({
@@ -28,6 +29,7 @@ export function MessageList({
   mode,
   setMode,
   append,
+  messageActionsAlwaysVisible = false,
 }: MessageListProps) {
   return (
     <div className="space-y-4 overflow-hidden w-full max-w-full message-list-container">
@@ -74,6 +76,7 @@ export function MessageList({
                 mode={mode}
                 setMode={setMode}
                 append={append}
+                messageActionsAlwaysVisible={messageActionsAlwaysVisible}
               />
             </motion.div>
           )

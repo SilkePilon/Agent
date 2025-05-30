@@ -148,6 +148,7 @@ export interface ChatMessageProps extends Message {
   mode?: 'agent' | 'chat'
   setMode?: (mode: 'agent' | 'chat') => void
   append?: (message: { role: "user"; content: string }) => void
+  messageActionsAlwaysVisible?: boolean
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -165,6 +166,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   append,
   modelId,
   modelProvider,
+  messageActionsAlwaysVisible = false,
 }) => {
   const files = useMemo(() => {
     return experimental_attachments?.map((attachment) => {
@@ -236,7 +238,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               )}
               
               {actions ? (
-                <div className="absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground opacity-0 transition-opacity group-hover/message:opacity-100">
+                <div className={cn(
+                  "absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground transition-opacity",
+                  messageActionsAlwaysVisible 
+                    ? "opacity-100" 
+                    : "opacity-0 group-hover/message:opacity-100"
+                )}>
                   {actions}
                 </div>
               ) : null}
@@ -292,7 +299,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         )}
         
         {actions ? (
-          <div className="absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground opacity-0 transition-opacity group-hover/message:opacity-100">
+          <div className={cn(
+            "absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground transition-opacity",
+            messageActionsAlwaysVisible 
+              ? "opacity-100" 
+              : "opacity-0 group-hover/message:opacity-100"
+          )}>
             {actions}
           </div>
         ) : null}
