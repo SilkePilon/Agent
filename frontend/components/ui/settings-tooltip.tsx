@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Bot, MessageCircle, Settings, ChevronDown } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { Gemini, OpenRouter } from '@lobehub/icons'
 
 import { cn } from "@/lib/utils"
@@ -121,22 +121,28 @@ function ModelItemContent({ model }: ModelItemContentProps) {
                 side="right"
                 align="start"
                 sideOffset={10}
-                className="max-w-xs p-3 text-sm bg-popover border shadow-md z-[9999]"
+                className="max-w-xs p-0 bg-background border border-border shadow-md rounded-lg overflow-hidden z-[9999]"
             >
-                <div className="space-y-2">
+                <div className="p-3 space-y-1.5"> {/* Adjusted padding to inner div and space-y */}
                     <div className="font-medium text-foreground">{model.name}</div>
-                    <div className="text-xs text-muted-foreground whitespace-normal leading-relaxed">
-                        {model.description}
+                    {model.description && (
+                        <div className="text-xs text-muted-foreground whitespace-normal leading-relaxed">
+                            {model.description}
+                        </div>
+                    )}
+                    <div className="text-xs text-muted-foreground">
+                        <span className="font-semibold">ID:</span> {model.id.split('/').pop() || model.id}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                        {model.id.split('/').join(' / ')}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                        {model.pricing?.completion || "Free"}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                        {model.pricing?.prompt || "Free"}
-                    </div>
+                    {/* Pricing display with slightly improved formatting */}
+                    {(model.pricing?.prompt || model.pricing?.completion) ? (
+                        <div className="text-xs text-muted-foreground pt-1">
+                            <span className="font-semibold">Pricing:</span>
+                            <div>Input: <span className="font-mono opacity-90">{model.pricing.prompt || "Free"}</span></div>
+                            <div>Output: <span className="font-mono opacity-90">{model.pricing.completion || "Free"}</span></div>
+                        </div>
+                    ) : model.pricing !== undefined ? ( // Catches cases where pricing object exists but values might be empty/zero, explicitly "Free"
+                         <div className="text-xs text-muted-foreground pt-1"><span className="font-semibold">Pricing:</span> Free</div>
+                    ) : null /* No pricing information available */}
                 </div>
             </TooltipContent>
         </Tooltip>
@@ -258,28 +264,28 @@ export function SettingsTooltip({
                                 className={cn(
                                     "flex-1 h-8 text-xs transition-all duration-200",
                                     provider === 'google'
-                                        ? "bg-purple-600 hover:bg-purple-700 text-white"
-                                        : "hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 text-foreground"
+                                        ? "bg-purple-600 hover:bg-purple-700 text-white" // Active state
+                                        : "hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 text-foreground" // Inactive state
                                 )}
                                 onClick={() => setProvider?.('google')}
                             >
                                 <Gemini className={cn(
                                     "h-3.5 w-3.5 mr-1",
-                                    provider !== 'google' && "text-purple-600"
+                                    provider !== 'google' && "text-purple-600" // Icon color for inactive state
                                 )} />
                                 Gemini
                             </Button>                <Button
                                 variant={provider === 'openrouter' ? 'default' : 'outline'}
                                 size="sm"
                                 className={cn(
-                                    "flex-1 h-8 text-xs transition-all duration-200",
+                                    "flex-1 h-8 text-xs transition-all duration-200 group", // Added group for icon hover
                                     provider === 'openrouter'
-                                        ? "bg-[#6467f2] hover:bg-[#5254d4] text-white"
-                                        : "hover:bg-[#f0f0ff] hover:text-[#6467f2] hover:border-[#d0d1fa] text-foreground"
+                                        ? "bg-[#6467f2] hover:bg-[#5254d4] text-white" // Active state
+                                        : "hover:bg-[#f0f0ff] hover:text-[#6467f2] hover:border-[#d0d1fa] text-foreground" // Inactive state
                                 )}
                                 onClick={() => setProvider?.('openrouter')}                >                  <OpenRouter className={cn(
                                     "h-3.5 w-3.5 mr-1",
-                                    provider !== 'openrouter' && "text-[#6467f2]"
+                                    provider !== 'openrouter' && "text-[#6467f2] group-hover:text-[#5254d4]" // Icon color for inactive and hover states
                                 )} />
                                     OpenRouter
                                 </Button></div>
