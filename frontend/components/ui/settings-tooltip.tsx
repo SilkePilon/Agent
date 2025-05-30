@@ -77,20 +77,20 @@ function ModelItemContent({ model }: ModelItemContentProps) {
 
   return (
     <div 
-      className="flex flex-col items-start w-full"
+      className="flex flex-col items-start justify-start w-full text-left"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-    >      <div className="w-full">
+    >      <div className="w-full text-left">
         <ScrollingText 
           text={model.name}
-          className="font-medium text-foreground" 
+          className="font-medium text-foreground text-left" 
           maxWidth={224}
           isParentHovered={isHovered}
         />
       </div>
       {model.description && (
-        <div className="w-full overflow-hidden">
-          <span className="text-muted-foreground text-xs truncate block max-w-[224px]">
+        <div className="w-full overflow-hidden text-left">
+          <span className="text-muted-foreground text-xs truncate block max-w-[224px] text-left">
             {model.description}
           </span>
         </div>
@@ -229,13 +229,12 @@ export function SettingsTooltip({
                   className={cn(
                     "flex-1 h-8 text-xs transition-all duration-200",
                     provider === 'openrouter' 
-                      ? "bg-orange-500 hover:bg-orange-600 text-white" 
-                      : "hover:bg-orange-50 hover:text-orange-500 hover:border-orange-200 text-foreground"
+                      ? "bg-[#6467f2] hover:bg-[#5254d4] text-white" 
+                      : "hover:bg-[#f0f0ff] hover:text-[#6467f2] hover:border-[#d0d1fa] text-foreground"
                   )}
-                  onClick={() => setProvider?.('openrouter')}                >
-                  <OpenRouter className={cn(
+                  onClick={() => setProvider?.('openrouter')}                >                  <OpenRouter className={cn(
                     "h-3.5 w-3.5 mr-1", 
-                    provider !== 'openrouter' && "text-orange-500"
+                    provider !== 'openrouter' && "text-[#6467f2]"
                   )} />
                   OpenRouter
                 </Button></div>
@@ -265,8 +264,7 @@ export function SettingsTooltip({
                   style={{ width: 'var(--radix-select-trigger-width)' }}
                 >
                   {availableModels.map((model) => {
-                    return (
-                      <SelectItem key={model.id} value={model.id} className="text-xs">
+                    return (                      <SelectItem key={model.id} value={model.id} className="text-xs text-left">
                         <ModelItemContent model={model} />
                       </SelectItem>
                     )
