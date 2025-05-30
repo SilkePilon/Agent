@@ -1,4 +1,3 @@
-import { motion, AnimatePresence } from "framer-motion"
 import {
   ChatMessage,
   type ChatMessageProps,
@@ -31,61 +30,32 @@ export function MessageList({
 }: MessageListProps) {
   return (
     <div className="space-y-4 overflow-hidden w-full max-w-full message-list-container">
-      <AnimatePresence mode="popLayout">
-        {messages.map((message, index) => {
-          const additionalOptions =
-            typeof messageOptions === "function"
-              ? messageOptions(message)
-              : messageOptions
+      {messages.map((message, index) => {
+        const additionalOptions =
+          typeof messageOptions === "function"
+            ? messageOptions(message)
+            : messageOptions
 
-          return (
-            <motion.div
-              key={`${message.id}-${index}`}
-              initial={{ 
-                opacity: 0, 
-                y: 20,
-                scale: 0.95
-              }}
-              animate={{ 
-                opacity: 1, 
-                y: 0,
-                scale: 1
-              }}
-              exit={{ 
-                opacity: 0, 
-                y: -10,
-                scale: 0.95
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 500,
-                damping: 30,
-                duration: 0.3,
-                delay: index * 0.05
-              }}
-              layout
-            >
-              <ChatMessage
-                showTimeStamp={showTimeStamps}
-                {...message}
-                {...additionalOptions}
-                mode={mode}
-                setMode={setMode}
-                append={append}
-              />
-            </motion.div>
-          )
-        })}
-      </AnimatePresence>
+        return (
+          <div
+            key={`${message.id}-${index}`}
+          >
+            <ChatMessage
+              showTimeStamp={showTimeStamps}
+              animation="none"
+              {...message}
+              {...additionalOptions}
+              mode={mode}
+              setMode={setMode}
+              append={append}
+            />
+          </div>
+        )
+      })}
       {isTyping && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div>
           <TypingIndicator />
-        </motion.div>
+        </div>
       )}
     </div>
   )
