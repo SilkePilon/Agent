@@ -235,6 +235,253 @@ interface SettingsTooltipProps {
     selectedModel?: string
     setSelectedModel?: (model: string) => void
     children: React.ReactNode
+    // Props for SettingsFormContents that might be managed by SettingsTooltip
+    availableModels?: ModelOption[]
+    isLoadingModels?: boolean
+    modelSearchQuery?: string
+    setModelSearchQuery?: (query: string) => void
+    filteredModels?: ModelOption[]
+    getCurrentProvider?: () => string
+    getCurrentModel?: () => string
+    // For select dropdown state, if needed to be controlled from outside or passed to SettingsFormContents
+    selectOpen?: boolean
+    setSelectOpen?: (open: boolean) => void
+    searchInputRef?: React.RefObject<HTMLInputElement>
+}
+
+interface SettingsFormContentsProps {
+    mode?: 'agent' | 'chat'
+    setMode?: (mode: 'agent' | 'chat') => void
+    provider?: 'openrouter' | 'google'
+    setProvider?: (provider: 'openrouter' | 'google') => void
+    selectedModel?: string
+    setSelectedModel?: (model: string) => void
+    availableModels: ModelOption[]
+    isLoadingModels: boolean
+    modelSearchQuery: string
+    setModelSearchQuery: (query: string) => void
+    filteredModels: ModelOption[]
+    getCurrentProvider: () => string
+    getCurrentModel: () => string
+    // For select dropdown state, to be used internally by the form
+    selectOpen: boolean
+    setSelectOpen: (open: boolean) => void
+    searchInputRef: React.RefObject<HTMLInputElement | null>
+    // To control main tooltip visibility from select, if SettingsFormContents is used in Tooltip
+    setParentTooltipOpen?: (open: boolean) => void 
+}
+
+export function SettingsFormContents({
+    mode,
+    setMode,
+    provider,
+    setProvider,
+    selectedModel,
+    setSelectedModel,
+    availableModels,
+    isLoadingModels,
+    modelSearchQuery,
+    setModelSearchQuery,
+    filteredModels,
+    getCurrentProvider,
+    getCurrentModel,
+    selectOpen, // internal state for the select dropdown
+    setSelectOpen, // function to update this internal state
+    searchInputRef, // ref for the search input
+    setParentTooltipOpen, // Optional: only used when in a Tooltip
+}: SettingsFormContentsProps) {
+    return (
+        <div className="p-4 space-y-4">
+            {/* Header */}
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Settings className="h-4 w-4" />
+                Settings
+            </div>
+
+            {/* Mode Switch */}
+            {mode && setMode && (
+                <div className="space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">Mode</div>
+                    <div className="flex gap-1">
+                        <Button
+                            variant={mode === 'agent' ? 'default' : 'outline'}
+                            size="sm"
+                            className={cn(
+                                "flex-1 h-8 text-xs transition-all duration-200",
+                                mode === 'agent'
+                                    ? "bg-blue-500 hover:bg-blue-600 text-white shadow-sm"
+                                    : "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-foreground"
+                            )}
+                            onClick={() => setMode('agent')}
+                        >
+                            <Bot className="h-3 w-3 mr-1" />
+                            Agent
+                        </Button>
+                        <Button
+                            variant={mode === 'chat' ? 'default' : 'outline'}
+                            size="sm"
+                            className={cn(
+                                "flex-1 h-8 text-xs transition-all duration-200",
+                                mode === 'chat'
+                                    ? "bg-green-500 hover:bg-green-600 text-white shadow-sm"
+                                    : "hover:bg-green-50 hover:text-green-600 hover:border-green-200 text-foreground"
+                            )}
+                            onClick={() => setMode('chat')}
+                        >
+                            <MessageCircle className="h-3 w-3 mr-1" />
+                            Chat
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {/* Provider Selection */}
+            {provider && setProvider && (
+                <div className="space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">Provider</div>
+                    <div className="flex gap-1">                <Button
+                        variant={provider === 'google' ? 'default' : 'outline'}
+                        size="sm"
+                        className={cn(
+                            "flex-1 h-8 text-xs transition-all duration-200",
+                            provider === 'google'
+                                ? "bg-purple-600 hover:bg-purple-700 text-white" // Active state
+                                : "hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 text-foreground" // Inactive state
+                        )}
+                        onClick={() => setProvider?.('google')}
+                    >
+                        <Gemini className={cn(
+                            "h-3.5 w-3.5 mr-1",
+                            provider !== 'google' && "text-purple-600" // Icon color for inactive state
+                        )} />
+                        Gemini
+                    </Button>                <Button
+                        variant={provider === 'openrouter' ? 'default' : 'outline'}
+                        size="sm"
+                        className={cn(
+                            "flex-1 h-8 text-xs transition-all duration-200 group", // Added group for icon hover
+                            provider === 'openrouter'
+                                ? "bg-[#6467f2] hover:bg-[#5254d4] text-white" // Active state
+                                : "hover:bg-[#f0f0ff] hover:text-[#6467f2] hover:border-[#d0d1fa] text-foreground" // Inactive state
+                        )}
+                        onClick={() => setProvider?.('openrouter')}                >                  <OpenRouter className={cn(
+                            "h-3.5 w-3.5 mr-1",
+                            provider !== 'openrouter' && "text-[#6467f2] group-hover:text-[#5254d4]" // Icon color for inactive and hover states
+                        )} />
+                            OpenRouter
+                        </Button></div>
+                </div>
+            )}
+
+            {/* Model Selection for OpenRouter */}
+            {provider === 'openrouter' && setSelectedModel && (
+                <div className="space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">Model</div>              <Select
+                        value={selectedModel}
+                        onValueChange={setSelectedModel}
+                        onOpenChange={(open) => {
+                            setSelectOpen(open); // Directly set the open state from the Select's callback
+                            if (open) {
+                                if (setParentTooltipOpen) setParentTooltipOpen(true); // Preserve for tooltip
+                                setTimeout(() => searchInputRef.current?.focus(), 0); // Focus search on open
+                            }
+                            // Removed the 'else' block that attempted to refocus the search input.
+                            // If modelSearchQuery is not empty when closing, also clear it.
+                            // This is a good practice to reset search on close.
+                            if (!open && modelSearchQuery) {
+                                setModelSearchQuery('');
+                            }
+                        }}
+                    >
+                        <SelectTrigger className="h-8 text-xs w-full">
+                            <SelectValue placeholder="Select a model" />
+                        </SelectTrigger>
+                        <SelectContent
+                            className="max-h-64"
+                            side="bottom"
+                            align="start"
+                            style={{ width: 'var(--radix-select-trigger-width)' }}
+                            onCloseAutoFocus={(e) => e.preventDefault()}
+                        >
+                            <div
+                                className="p-2 bg-popover -mx-1 -mt-1 mb-1 border-b"
+                            >
+                                <div className="relative">
+                                    <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        ref={searchInputRef}
+                                        type="search"
+                                        placeholder="Search models..."
+                                        value={modelSearchQuery}
+                                        onChange={(e) => setModelSearchQuery(e.target.value)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onFocus={(e) => e.stopPropagation()}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Escape') {
+                                                e.stopPropagation();
+                                                if (modelSearchQuery) {
+                                                    setModelSearchQuery('');
+                                                    e.preventDefault();
+                                                }
+                                                return;
+                                            }
+                                            if (['ArrowUp', 'ArrowDown', 'Enter', 'Home', 'End', 'PageUp', 'PageDown', 'Tab'].includes(e.key)) {
+                                                e.stopPropagation();
+                                            }
+                                            e.stopPropagation();
+                                        }}
+                                        className="h-8 text-xs w-full pl-8"
+                                    />
+                                </div>
+                            </div>
+                            {isLoadingModels ? (
+                                <div className="flex items-center justify-center p-4 text-xs text-muted-foreground">
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Loading models...
+                                </div>
+                            ) : filteredModels.length > 0 ? (
+                                filteredModels.map((model) => (
+                                    <SelectItem
+                                        key={model.id}
+                                        value={model.id}
+                                        className="text-xs text-left relative"
+                                    >
+                                        <ModelItemContent model={model} />
+                                    </SelectItem>
+                                ))
+                            ) : (
+                                <div className="p-2 text-center text-xs text-muted-foreground">
+                                    No models found.
+                                </div>
+                            )}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+
+            {/* Current Configuration */}
+            <div className="space-y-2 pt-2 border-t border-border">
+                <div className="text-xs font-medium text-muted-foreground">Current Setup</div>
+                <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs text-foreground">Provider:</span>
+                        <Badge variant="secondary" className="text-xs">
+                            {getCurrentProvider()}
+                        </Badge>
+                    </div>              <div className="flex items-center justify-between">
+                        <span className="text-xs text-foreground">Model:</span>
+                        <Badge variant="outline" className="text-xs max-w-32 px-2 py-1">
+                            <ScrollingText
+                                text={getCurrentModel()}
+                                className="text-xs"
+                                maxWidth={112}
+                            />
+                        </Badge>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
 }
 
 export function SettingsTooltip({
@@ -246,26 +493,26 @@ export function SettingsTooltip({
     setSelectedModel,
     children,
 }: SettingsTooltipProps) {
-    // Wrap everything in a TooltipProvider with a shorter delay for model tooltips
     const [availableModels, setAvailableModels] = React.useState<ModelOption[]>([])
     const [isLoadingModels, setIsLoadingModels] = React.useState(false);
     const [isOpen, setIsOpen] = React.useState(false)
-    const [selectOpen, setSelectOpen] = React.useState(false)
+    const [selectOpen, setSelectOpen] = React.useState(false) // State for select dropdown
     const [modelSearchQuery, setModelSearchQuery] = React.useState("");
     const searchInputRef = React.useRef<HTMLInputElement>(null);
 
     React.useEffect(() => {
-        if (provider === 'openrouter') {
+        if (provider === 'openrouter' && isOpen) { // Fetch models only if provider is OpenRouter and tooltip is open
             setIsLoadingModels(true);
             getAllModels()
                 .then(setAvailableModels)
                 .catch(error => {
                     console.error("Failed to load models:", error)
-                    // Optionally, set an error state here to display to the user
                 })
                 .finally(() => setIsLoadingModels(false));
+        } else if (provider !== 'openrouter') {
+            setAvailableModels([]); // Clear models if provider is not OpenRouter
         }
-    }, [provider])
+    }, [provider, isOpen])
 
     const filteredModels = React.useMemo(() => {
         if (provider !== 'openrouter' || !availableModels.length) {
@@ -283,22 +530,14 @@ export function SettingsTooltip({
         );
     }, [availableModels, modelSearchQuery, provider]);
 
-    // Custom close handler that considers select state
     const handleOpenChange = React.useCallback((newOpen: boolean) => {
-        if (!newOpen) { // If trying to close the main tooltip
-            if (selectOpen) { // If select dropdown is still open, don't close main tooltip
-                return;
-            }
-            // If the search input is focused, don't close the main tooltip yet.
-            // This can happen if the Select closes itself but focus remains (or is restored to) the input.
-            if (document.activeElement === searchInputRef.current) {
-                return;
-            }
-            setModelSearchQuery(""); // Clear search when main tooltip actually closes
+        if (!newOpen) {
+            if (selectOpen) return; // Don't close if select is open
+            if (document.activeElement === searchInputRef.current && modelSearchQuery) return; // Don't close if search input is active with content
+            setModelSearchQuery(""); 
         }
         setIsOpen(newOpen);
-    }, [selectOpen, searchInputRef]);
-
+    }, [selectOpen, searchInputRef, modelSearchQuery]);
 
     const getCurrentProvider = () => {
         if (provider === 'google') return 'Google Gemini'
@@ -306,12 +545,13 @@ export function SettingsTooltip({
     }
 
     const getCurrentModel = () => {
-        if (provider === 'google') return 'Gemini 2.5 Flash'
+        if (provider === 'google') return 'Gemini Pro 1.5' // Assuming a default or latest Google model
         if (provider === 'openrouter' && selectedModel) {
             const model = availableModels.find(m => m.id === selectedModel)
             return model?.name || selectedModel.split('/').pop()?.split(':')[0] || 'Default'
         } return 'Default'
     }
+
     return (
         <Tooltip open={isOpen} onOpenChange={handleOpenChange}>
             <TooltipTrigger asChild onClick={() => setIsOpen(!isOpen)}>
@@ -322,204 +562,25 @@ export function SettingsTooltip({
                 className="w-72 p-0 bg-background border border-border shadow-md rounded-lg overflow-hidden"
                 sideOffset={8}
             >
-                <div className="p-4 space-y-4">
-                    {/* Header */}
-                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                        <Settings className="h-4 w-4" />
-                        Settings
-                    </div>
-
-                    {/* Mode Switch */}
-                    {mode && setMode && (
-                        <div className="space-y-2">
-                            <div className="text-xs font-medium text-muted-foreground">Mode</div>
-                            <div className="flex gap-1">
-                                <Button
-                                    variant={mode === 'agent' ? 'default' : 'outline'}
-                                    size="sm"
-                                    className={cn(
-                                        "flex-1 h-8 text-xs transition-all duration-200",
-                                        mode === 'agent'
-                                            ? "bg-blue-500 hover:bg-blue-600 text-white shadow-sm"
-                                            : "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-foreground"
-                                    )}
-                                    onClick={() => setMode('agent')}
-                                >
-                                    <Bot className="h-3 w-3 mr-1" />
-                                    Agent
-                                </Button>
-                                <Button
-                                    variant={mode === 'chat' ? 'default' : 'outline'}
-                                    size="sm"
-                                    className={cn(
-                                        "flex-1 h-8 text-xs transition-all duration-200",
-                                        mode === 'chat'
-                                            ? "bg-green-500 hover:bg-green-600 text-white shadow-sm"
-                                            : "hover:bg-green-50 hover:text-green-600 hover:border-green-200 text-foreground"
-                                    )}
-                                    onClick={() => setMode('chat')}
-                                >
-                                    <MessageCircle className="h-3 w-3 mr-1" />
-                                    Chat
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Provider Selection */}
-                    {provider && setProvider && (
-                        <div className="space-y-2">
-                            <div className="text-xs font-medium text-muted-foreground">Provider</div>
-                            <div className="flex gap-1">                <Button
-                                variant={provider === 'google' ? 'default' : 'outline'}
-                                size="sm"
-                                className={cn(
-                                    "flex-1 h-8 text-xs transition-all duration-200",
-                                    provider === 'google'
-                                        ? "bg-purple-600 hover:bg-purple-700 text-white" // Active state
-                                        : "hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 text-foreground" // Inactive state
-                                )}
-                                onClick={() => setProvider?.('google')}
-                            >
-                                <Gemini className={cn(
-                                    "h-3.5 w-3.5 mr-1",
-                                    provider !== 'google' && "text-purple-600" // Icon color for inactive state
-                                )} />
-                                Gemini
-                            </Button>                <Button
-                                variant={provider === 'openrouter' ? 'default' : 'outline'}
-                                size="sm"
-                                className={cn(
-                                    "flex-1 h-8 text-xs transition-all duration-200 group", // Added group for icon hover
-                                    provider === 'openrouter'
-                                        ? "bg-[#6467f2] hover:bg-[#5254d4] text-white" // Active state
-                                        : "hover:bg-[#f0f0ff] hover:text-[#6467f2] hover:border-[#d0d1fa] text-foreground" // Inactive state
-                                )}
-                                onClick={() => setProvider?.('openrouter')}                >                  <OpenRouter className={cn(
-                                    "h-3.5 w-3.5 mr-1",
-                                    provider !== 'openrouter' && "text-[#6467f2] group-hover:text-[#5254d4]" // Icon color for inactive and hover states
-                                )} />
-                                    OpenRouter
-                                </Button></div>
-                        </div>
-                    )}
-
-                    {/* Model Selection for OpenRouter */}
-                    {provider === 'openrouter' && setSelectedModel && (
-                        <div className="space-y-2">
-                            <div className="text-xs font-medium text-muted-foreground">Model</div>              <Select
-                                value={selectedModel}
-                                onValueChange={setSelectedModel}
-                                onOpenChange={(open) => {
-                                    if (open) {
-                                        setSelectOpen(true);
-                                        setIsOpen(true); // Ensure main tooltip stays open
-                                        // Focus the search input when the select opens
-                                        setTimeout(() => searchInputRef.current?.focus(), 0);
-                                    } else {
-                                        setSelectOpen(false);
-                                        // If select closes and search input was focused, try to keep focus on it.
-                                        // This helps prevent the main tooltip from closing immediately if the
-                                        // select closed due to filtering (e.g., no results).
-                                        if (document.activeElement === searchInputRef.current || searchInputRef.current?.value) {
-                                            setTimeout(() => searchInputRef.current?.focus(), 0);
-                                        }
-                                    }
-                                }}
-                            >
-                                <SelectTrigger className="h-8 text-xs w-full">
-                                    <SelectValue placeholder="Select a model" />
-                                </SelectTrigger>
-                                <SelectContent // The Viewport inside SelectContent has p-1 by default.
-                                    className="max-h-64"
-                                    side="bottom"
-                                    align="start"
-                                    style={{ width: 'var(--radix-select-trigger-width)' }}
-                                    // Prevent main tooltip from closing when select content is interacted with or select closes
-                                    onCloseAutoFocus={(e) => e.preventDefault()}
-                                >
-                                    <div 
-                                        className="p-2 bg-popover -mx-1 -mt-1 mb-1 border-b"
-                                    >
-                                        <div className="relative">
-                                            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                                            <Input
-                                                ref={searchInputRef}
-                                                type="search"
-                                                placeholder="Search models..."
-                                                value={modelSearchQuery}
-                                                onChange={(e) => setModelSearchQuery(e.target.value)}
-                                                onClick={(e) => e.stopPropagation()} // Prevent select from closing
-                                                onFocus={(e) => e.stopPropagation()}  // Prevent select from closing
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Escape') {
-                                                        e.stopPropagation(); // Stop propagation to Select/Tooltip
-                                                        if (modelSearchQuery) {
-                                                            setModelSearchQuery('');
-                                                            e.preventDefault(); // Prevent default if we cleared search
-                                                        }
-                                                        // If query was empty, Escape might be intended for the Select itself (to close)
-                                                        // The stopPropagation above prevents it from closing the main tooltip.
-                                                        return;
-                                                    }
-                                                    // Stop propagation for navigation keys to prevent Select component from acting on them
-                                                    if (['ArrowUp', 'ArrowDown', 'Enter', 'Home', 'End', 'PageUp', 'PageDown', 'Tab'].includes(e.key)) {
-                                                        e.stopPropagation();
-                                                    }
-                                                    // For other keys (alphanumeric, backspace), allow default and bubbling.
-                                                    e.stopPropagation();
-                                                }}
-                                                className="h-8 text-xs w-full pl-8" // Padding for the icon
-                                            />
-                                        </div>
-                                    </div>
-                                    {isLoadingModels ? (
-                                        <div className="flex items-center justify-center p-4 text-xs text-muted-foreground">
-                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                            Loading models...
-                                        </div>
-                                    ) : filteredModels.length > 0 ? (
-                                        filteredModels.map((model) => (
-                                            <SelectItem
-                                                key={model.id}
-                                                value={model.id}
-                                                className="text-xs text-left relative"
-                                            >
-                                                <ModelItemContent model={model} />
-                                            </SelectItem>
-                                        ))
-                                    ) : (
-                                        <div className="p-2 text-center text-xs text-muted-foreground">
-                                            No models found.
-                                        </div>
-                                    )}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-
-                    {/* Current Configuration */}
-                    <div className="space-y-2 pt-2 border-t border-border">
-                        <div className="text-xs font-medium text-muted-foreground">Current Setup</div>
-                        <div className="space-y-1.5">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs text-foreground">Provider:</span>
-                                <Badge variant="secondary" className="text-xs">
-                                    {getCurrentProvider()}
-                                </Badge>
-                            </div>              <div className="flex items-center justify-between">
-                                <span className="text-xs text-foreground">Model:</span>
-                                <Badge variant="outline" className="text-xs max-w-32 px-2 py-1">
-                                    <ScrollingText
-                                        text={getCurrentModel()}
-                                        className="text-xs"
-                                        maxWidth={112}
-                                    />
-                                </Badge>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <SettingsFormContents
+                    mode={mode}
+                    setMode={setMode}
+                    provider={provider}
+                    setProvider={setProvider}
+                    selectedModel={selectedModel}
+                    setSelectedModel={setSelectedModel}
+                    availableModels={availableModels}
+                    isLoadingModels={isLoadingModels}
+                    modelSearchQuery={modelSearchQuery}
+                    setModelSearchQuery={setModelSearchQuery}
+                    filteredModels={filteredModels}
+                    getCurrentProvider={getCurrentProvider}
+                    getCurrentModel={getCurrentModel}
+                    selectOpen={selectOpen}
+                    setSelectOpen={setSelectOpen}
+                    searchInputRef={searchInputRef}
+                    setParentTooltipOpen={setIsOpen} // Pass setIsOpen to allow child to control parent
+                />
             </TooltipContent>
         </Tooltip>
     )
