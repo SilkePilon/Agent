@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { FilePreview } from "@/components/ui/file-preview"
 import { InterruptPrompt } from "@/components/ui/interrupt-prompt"
 import { SettingsTooltip } from "@/components/ui/settings-tooltip"
+import { AnimatedPlaceholder } from "@/components/ui/animated-placeholder"
 
 interface MessageInputBaseProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -59,6 +60,20 @@ export function MessageInput({
 }: MessageInputProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [showInterruptPrompt, setShowInterruptPrompt] = useState(false)
+
+  // Prompt suggestions for the animated placeholder
+  const promptSuggestions = [
+    "Explain quantum computing in simple terms",
+    "Write a creative story about time travel",
+    "Help me plan a weekend getaway",
+    "What are the latest AI breakthroughs?",
+    "Create a recipe with ingredients I have",
+    "Analyze this data for insights",
+    "Write code for a web scraper",
+    "Explain machine learning concepts",
+    "Help me learn a new language",
+    "Plan my workout routine"
+  ]
 
   const {
     isListening,
@@ -211,14 +226,14 @@ export function MessageInput({
         <div className="relative flex-1">
           <textarea
             aria-label="Write your prompt here"
-            placeholder={placeholder}
+            placeholder=""
             ref={textAreaRef}
             onPaste={onPaste}
             onKeyDown={onKeyDown}
             onFocus={props.onFocus}
             onBlur={props.onBlur}
             className={cn(
-              "z-10 w-full grow resize-none rounded-xl border-2 border-input bg-background p-3 pr-24 text-sm ring-offset-background transition-[border] placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+              "relative z-10 w-full grow resize-none rounded-xl border-2 border-input bg-background p-3 pr-24 text-sm ring-offset-background transition-[border] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
               props.mode === 'agent' 
                 ? "focus-visible:border-blue-500" 
                 : "focus-visible:border-primary",
@@ -251,6 +266,19 @@ export function MessageInput({
                   "hasMessages"
                 ]))}
           />
+
+          {/* Animated placeholder overlay - positioned above textarea */}
+          {!props.value && (
+            <div className="absolute top-3 left-3 pointer-events-none z-20 text-muted-foreground">
+              <AnimatedPlaceholder
+                suggestions={promptSuggestions}
+                className="text-sm"
+                typingSpeed={80}
+                deletingSpeed={40}
+                pauseDuration={2500}
+              />
+            </div>
+          )}
 
           {props.allowAttachments && (
             <div className="absolute inset-x-3 bottom-0 z-20 overflow-x-auto py-3">
