@@ -1,7 +1,7 @@
 "use client"
 
-import * as React from "react"
-import { Bot, MessageCircle, Settings, ChevronDown } from "lucide-react"
+import * as React from "react" // Added Info and DollarSign icons
+import { Bot, MessageCircle, Settings, ChevronDown, DollarSign, Info } from "lucide-react"
 import { motion } from "framer-motion"
 import { Gemini, OpenRouter } from '@lobehub/icons'
 
@@ -67,6 +67,37 @@ function ScrollingText({ text, className, maxWidth = 200, isParentHovered }: Scr
     )
 }
 
+// Helper function to format price per 1 million tokens
+const formatPricePerMillionTokens = (price?: number | string): string => {
+    if (price === "Free" || typeof price === 'undefined' || price === null) {
+        return "Free";
+    }
+
+    // Assuming 'price' is per token.
+    const rawNumericPrice = typeof price === 'string' ? parseFloat(price.replace(/[^0-9.-]+/g,"")) : price;
+
+    if (isNaN(rawNumericPrice) || rawNumericPrice === 0) {
+        return "Free";
+    }
+
+    // If the displayed price (e.g., $150.00 / 1M) is 100x larger than expected (e.g., $1.50 / 1M),
+    // it implies the rawNumericPrice (per token) is effectively 100x too large
+    // when directly converted to dollars. This adjusts for that by treating rawNumericPrice
+    // as if it's in units that are 1/100th of a dollar (e.g. cents per token).
+    const priceInAdjustedUnitsPerToken = rawNumericPrice / 100;
+
+    const pricePerMillion = priceInAdjustedUnitsPerToken * 1_000_000;
+
+    // Using toLocaleString for better currency formatting, assuming USD
+    // and ensuring two decimal places.
+    return `${pricePerMillion.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })} / 1M`;
+};
+
 // Component for model item content with shared hover state
 interface ModelItemContentProps {
     model: ModelOption
@@ -117,7 +148,8 @@ function ModelItemContent({ model }: ModelItemContentProps) {
                         </div>
                     )}
                 </div>
-            </TooltipTrigger>      <TooltipContent
+            </TooltipTrigger>      
+            <TooltipContent
                 side="right"
                 align="start"
                 sideOffset={10}
@@ -130,18 +162,27 @@ function ModelItemContent({ model }: ModelItemContentProps) {
                             {model.description}
                         </div>
                     )}
-                    <div className="text-xs text-muted-foreground">
-                        <span className="font-semibold">ID:</span> {model.id.split('/').pop() || model.id}
+                    <div className="flex items-center text-xs text-muted-foreground">
+                        <Info className="h-3 w-3 mr-1.5 text-muted-foreground/80" />
+                        <span className="font-semibold mr-1">ID:</span> {model.id.split('/').pop() || model.id}
                     </div>
                     {/* Pricing display with slightly improved formatting */}
                     {(model.pricing?.prompt || model.pricing?.completion) ? (
-                        <div className="text-xs text-muted-foreground pt-1">
-                            <span className="font-semibold">Pricing:</span>
-                            <div>Input: <span className="font-mono opacity-90">{model.pricing.prompt || "Free"}</span></div>
-                            <div>Output: <span className="font-mono opacity-90">{model.pricing.completion || "Free"}</span></div>
+                        <div className="text-xs text-muted-foreground pt-1 space-y-0.5">
+                            <div className="font-semibold">Pricing:</div>
+                            <div className="space-y-0.5"> {/* Removed pl, icons will provide alignment */}
+                                <div className="flex items-center">
+                                    <DollarSign className="h-3 w-3 mr-1.5 text-muted-foreground/80 flex-shrink-0" />
+                                    Input: <span className="ml-1 font-mono opacity-90">{formatPricePerMillionTokens(model.pricing.prompt)}</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <DollarSign className="h-3 w-3 mr-1.5 text-muted-foreground/80 flex-shrink-0" />
+                                    Output: <span className="ml-1 font-mono opacity-90">{formatPricePerMillionTokens(model.pricing.completion)}</span>
+                                </div>
+                            </div>
                         </div>
                     ) : model.pricing !== undefined ? ( // Catches cases where pricing object exists but values might be empty/zero, explicitly "Free"
-                         <div className="text-xs text-muted-foreground pt-1"><span className="font-semibold">Pricing:</span> Free</div>
+                         <div className="flex items-center text-xs text-muted-foreground pt-1"><DollarSign className="h-3 w-3 mr-1.5 text-muted-foreground/80" /><span className="font-semibold">Pricing:</span> Free</div>
                     ) : null /* No pricing information available */}
                 </div>
             </TooltipContent>
