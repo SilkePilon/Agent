@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useRef, type ReactElement } from "react"
+import { useState, useCallback, useRef, useEffect, type ReactElement } from "react" // Added useEffect
 import { ArrowDown, ThumbsDown, ThumbsUp } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -171,7 +171,7 @@ export function ChatMessages({
   } = useAutoScroll([messages, lastMessageContent]) // Add lastMessageContent to dependencies
 
   // New useEffect for streaming scroll
-  React.useEffect(() => {
+  useEffect(() => { // Changed to direct useEffect
     if (isLoading && shouldAutoScroll) {
       scrollToBottom();
     }
