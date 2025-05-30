@@ -75,21 +75,13 @@ export async function fetchOpenRouterModels(): Promise<ModelOption[]> {
     
     // Convert to our ModelOption format and filter for relevant models
     cachedModels = data.data
-      .filter(model => {
-        // Filter for models that are commonly used and have reasonable pricing
-        const promptPrice = parseFloat(model.pricing.prompt);
-        const completionPrice = parseFloat(model.pricing.completion);
-        
-        // Include models with pricing info and reasonable costs (under $0.01 per 1k tokens)
-        return promptPrice > 0 && promptPrice < 0.01 && completionPrice > 0 && completionPrice < 0.01;
-      })
       .map(model => ({
         id: model.id,
         name: model.name,
         provider: 'openrouter' as const,
         pricing: {
-          prompt: parseFloat(model.pricing.prompt) * 1000, // Convert to per 1k tokens
-          completion: parseFloat(model.pricing.completion) * 1000
+          prompt: parseFloat(model.pricing.prompt),
+          completion: parseFloat(model.pricing.completion)
         },
         contextLength: model.context_length,
         description: model.description
@@ -102,7 +94,6 @@ export async function fetchOpenRouterModels(): Promise<ModelOption[]> {
         }
         return a.name.localeCompare(b.name);
       })
-      .slice(0, 50); // Limit to top 50 models
 
     lastFetchTime = Date.now();
     return cachedModels;
