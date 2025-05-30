@@ -73,11 +73,49 @@ export default function Home() {
   const enhancedHandleSubmit = useCallback((e?: { preventDefault?: () => void }, options?: { experimental_attachments?: FileList }) => {
     return handleSubmit(e, options);
   }, [handleSubmit]);
-
   // Function to clear all messages
   const clearMessages = useCallback(() => {
     setMessages([]);
   }, [setMessages]);
+
+  // Handle feedback submission
+  const handleSubmitFeedback = useCallback(async (
+    messageId: string, 
+    feedback: string, 
+    rating: "thumbs-up" | "thumbs-down"
+  ) => {
+    console.log('Feedback submitted:', { messageId, feedback, rating });
+    // Here you would typically send the feedback to your backend
+    // Example: await fetch('/api/feedback', { method: 'POST', body: JSON.stringify({ messageId, feedback, rating }) })
+  }, []);
+
+  // Handle response retry
+  const handleRetryResponse = useCallback(async (messageId: string) => {
+    console.log('Retrying response for message:', messageId);
+    
+    // Find the user message that led to this assistant response
+    const messageIndex = messages.findIndex(m => m.id === messageId);
+    if (messageIndex === -1) return;
+    
+    // Find the preceding user message
+    let userMessageIndex = messageIndex - 1;
+    while (userMessageIndex >= 0 && messages[userMessageIndex].role !== 'user') {
+      userMessageIndex--;
+    }
+    
+    if (userMessageIndex >= 0) {
+      const userMessage = messages[userMessageIndex];
+      
+      // Remove all messages after the user message and regenerate
+      const messagesToKeep = messages.slice(0, userMessageIndex + 1);
+      setMessages(messagesToKeep);
+      
+      // Re-submit the user message to generate a new response
+      if (append) {
+        append({ role: 'user', content: userMessage.content });
+      }
+    }
+  }, [messages, setMessages, append]);
 
   return (
     <motion.div 
@@ -99,8 +137,7 @@ export default function Home() {
               duration: 0.6
             }}
           >
-            <div className="w-full max-w-3xl">
-              <ChatMessages
+            <div className="w-full max-w-3xl">              <ChatMessages
                 messages={messages.map(msg => {
                   // Add current model information to assistant messages
                   if (msg.role === 'assistant') {
@@ -115,6 +152,9 @@ export default function Home() {
                 stop={stop}
                 mode={mode}
                 setMode={setMode}
+                onSubmitFeedback={handleSubmitFeedback}
+                onRetryResponse={handleRetryResponse}
+                setMessages={setMessages as any}
               />
             </div>
           </motion.div>

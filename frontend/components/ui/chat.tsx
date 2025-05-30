@@ -7,7 +7,7 @@ import {
   useState,
   type ReactElement,
 } from "react"
-import { ArrowDown, ThumbsDown, ThumbsUp } from "lucide-react"
+import { ArrowDown, RotateCcw, ThumbsDown, ThumbsUp } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useAutoScroll } from "@/hooks/use-auto-scroll"
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { type Message } from "@/components/ui/chat-message"
 import { type MessagePart } from "@/components/ui/chat-message"
 import { CopyButton } from "@/components/ui/copy-button"
+import { FeedbackDialog } from "@/components/ui/feedback-dialog"
 import { MessageInput } from "@/components/ui/message-input"
 import { MessageList } from "@/components/ui/message-list"
 import { PromptSuggestions } from "@/components/ui/prompt-suggestions"
@@ -34,6 +35,12 @@ interface ChatPropsBase {
     messageId: string,
     rating: "thumbs-up" | "thumbs-down"
   ) => void
+  onSubmitFeedback?: (
+    messageId: string,
+    feedback: string,
+    rating: "thumbs-up" | "thumbs-down"
+  ) => void
+  onRetryResponse?: (messageId: string) => void
   setMessages?: (messages: Message[]) => void
   transcribeAudio?: (blob: Blob) => Promise<string>
   mode?: 'agent' | 'chat'
@@ -67,6 +74,8 @@ export function Chat({
   suggestions,
   className,
   onRateResponse,
+  onSubmitFeedback,
+  onRetryResponse,
   setMessages,
   transcribeAudio,
   mode,
@@ -76,6 +85,15 @@ export function Chat({
   selectedModel,
   setSelectedModel,
 }: ChatProps) {
+  const [feedbackDialog, setFeedbackDialog] = useState<{
+    isOpen: boolean
+    messageId: string
+    feedbackType: "thumbs-up" | "thumbs-down"
+  }>({
+    isOpen: false,
+    messageId: "",
+    feedbackType: "thumbs-up"
+  })
   const lastMessage = messages.at(-1)
   const isEmpty = messages.length === 0
   const isTyping = lastMessage?.role === "user"
@@ -167,9 +185,36 @@ export function Chat({
     }
   }, [stop, setMessages, messagesRef])
 
+  const handleFeedbackClick = useCallback((messageId: string, feedbackType: "thumbs-up" | "thumbs-down") => {
+    if (onSubmitFeedback) {
+      setFeedbackDialog({
+        isOpen: true,
+        messageId,
+        feedbackType
+      })
+    } else if (onRateResponse) {
+      onRateResponse(messageId, feedbackType)
+    }
+  }, [onSubmitFeedback, onRateResponse])
+
+  const handleFeedbackSubmit = useCallback(async (feedback: string, rating: "thumbs-up" | "thumbs-down") => {
+    if (onSubmitFeedback && feedbackDialog.messageId) {
+      await onSubmitFeedback(feedbackDialog.messageId, feedback, rating)
+    }
+  }, [onSubmitFeedback, feedbackDialog.messageId])
+
+  const handleFeedbackClose = useCallback(() => {
+    setFeedbackDialog(prev => ({ ...prev, isOpen: false }))
+  }, [])
+
+  const handleRetry = useCallback((messageId: string) => {
+    if (onRetryResponse) {
+      onRetryResponse(messageId)
+    }
+  }, [onRetryResponse])
   const messageOptions = useCallback(
     (message: Message) => ({
-      actions: onRateResponse ? (
+      actions: message.role === "assistant" ? (
         <>
           <div className="border-r pr-1">
             <CopyButton
@@ -177,33 +222,51 @@ export function Chat({
               copyMessage="Copied response to clipboard!"
             />
           </div>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-6 w-6"
-            onClick={() => onRateResponse(message.id, "thumbs-up")}
-          >
-            <ThumbsUp className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-6 w-6"
-            onClick={() => onRateResponse(message.id, "thumbs-down")}
-          >
-            <ThumbsDown className="h-4 w-4" />
-          </Button>
+          {(onRateResponse || onSubmitFeedback) && (
+            <>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6 hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 transition-colors"
+                onClick={() => handleFeedbackClick(message.id, "thumbs-up")}
+                title="Good response"
+              >
+                <ThumbsUp className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
+                onClick={() => handleFeedbackClick(message.id, "thumbs-down")}
+                title="Poor response"
+              >
+                <ThumbsDown className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+          {onRetryResponse && (
+            <div className="border-l pl-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6 hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors"
+                onClick={() => handleRetry(message.id)}
+                title="Regenerate response"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </>
-      ) : (
+      ) : message.role === "user" ? (
         <CopyButton
           content={message.content}
-          copyMessage="Copied response to clipboard!"
+          copyMessage="Copied message to clipboard!"
         />
-      ),
+      ) : null,
     }),
-    [onRateResponse]
+    [handleFeedbackClick, onRetryResponse, handleRetry, onRateResponse, onSubmitFeedback]
   )
-
   return (
     <ChatContainer className={className}>
       {messages.length > 0 ? (
@@ -243,6 +306,16 @@ export function Chat({
           />
         )}
       </ChatForm>
+
+      {onSubmitFeedback && (
+        <FeedbackDialog
+          isOpen={feedbackDialog.isOpen}
+          onClose={handleFeedbackClose}
+          feedbackType={feedbackDialog.feedbackType}
+          onSubmit={handleFeedbackSubmit}
+          messageId={feedbackDialog.messageId}
+        />
+      )}
     </ChatContainer>
   )
 }
