@@ -214,6 +214,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   }
 
   if (parts && parts.length > 0) {
+    // Find the last text part index for assistant messages
+    const lastTextPartIndex = parts.map((p, i) => p.type === "text" ? i : -1).filter(i => i !== -1).pop();
+    
     return parts.map((part, index) => {
       if (part.type === "text") {
         return (
@@ -228,7 +231,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               <MarkdownRenderer>{part.text}</MarkdownRenderer>
               
               {/* Show model badge inside the bubble for assistant messages */}
-              {!isUser && index === 0 && role === "assistant" && (
+              {!isUser && index === lastTextPartIndex && role === "assistant" && (
                 <ModelBadge modelProvider={modelProvider} modelId={modelId} />
               )}
               
@@ -322,12 +325,14 @@ interface ModelBadgeProps {
 }
 
 const ModelBadge: React.FC<ModelBadgeProps> = ({ modelId, modelProvider }) => {
-  // Temporary debug - let's see what we're getting
-  console.log('ModelBadge received:', { modelId, modelProvider });
+  // Only render if we have valid provider and model information
+  if (!modelProvider || !modelId) {
+    return null;
+  }
   
   return (
     <motion.div 
-      className="flex items-center gap-1.5 text-xs mt-2 px-2 py-1 bg-muted/50 dark:bg-muted/30 border border-border/50 rounded-md w-fit opacity-75"
+      className="flex items-center gap-1.5 text-xs mt-2 px-2 py-1 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit opacity-75"
       initial={{ opacity: 0, y: -5 }}
       animate={{ opacity: 0.75, y: 0 }}
       transition={{ 
@@ -341,11 +346,9 @@ const ModelBadge: React.FC<ModelBadgeProps> = ({ modelId, modelProvider }) => {
         <Gemini className="h-3 w-3 text-purple-600" />
       ) : modelProvider === 'openrouter' ? (
         <OpenRouter className="h-3 w-3 text-[#6467f2]" />
-      ) : (
-        <div className="h-3 w-3 bg-gray-400 rounded" />
-      )}
+      ) : null}
       <span className="text-muted-foreground font-medium text-[10px]">
-        {modelId || 'No Model'} ({modelProvider || 'No Provider'})
+        {modelId}
       </span>
     </motion.div>
   );
@@ -586,59 +589,6 @@ function ToolResult({
               <span>Humidity: {isObject(data.current) ? String(data.current.humidity) : ''}%</span>
               <span>Wind: {isObject(data.current) ? String(data.current.windSpeed) : ''} mph</span>
             </div>
-          </div>
-        )
-      
-      case 'suggestModeSwitch':
-        return (
-          <div className="space-y-4 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
-            <div className="flex items-center gap-2">
-              <Bot className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Agent Mode Recommended</span>
-            </div>
-            <div className="text-sm text-gray-700 dark:text-gray-300">
-              {String(data.reason || '')}
-            </div>
-            <div className="space-y-2">
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Agent Mode capabilities that would help:</span>
-              <ul className="list-disc list-inside space-y-1 text-xs text-gray-600 dark:text-gray-400">
-                {Array.isArray(data.capabilities) && data.capabilities.map((capability, i) => (
-                  <li key={i}>{String(capability)}</li>
-                ))}
-              </ul>
-            </div>
-            {setMode && (
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => {
-                    setMode('agent')
-                    // Auto-submit the original user request in agent mode
-                    if (append && data.userRequest) {
-                      // Small delay to let the mode change take effect
-                      setTimeout(() => {
-                        append({ role: "user", content: String(data.userRequest || '') })
-                      }, 100)
-                    }
-                  }}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                  size="sm"
-                >
-                  <Bot className="h-4 w-4 mr-2" />
-                  Switch to Agent Mode & Continue
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    // Stay in chat mode - user can manually copy and re-submit
-                  }}
-                  size="sm"
-                  className="px-3"
-                >
-                  Stay in Chat
-                </Button>
-              </div>
-            )}
           </div>
         )
       

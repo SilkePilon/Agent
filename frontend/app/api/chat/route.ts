@@ -276,28 +276,7 @@ I am pleased to present this proposal for your review...`
             recipient,
             subject: `Generated ${purpose} email`,
             template: templates[purpose],
-            keyPoints,
-            suggestions: ['Keep it concise', 'Use professional tone', 'Include clear call-to-action']
-          };
-        },
-      }),
-
-      // Mode switching suggestion (for auto-continuation from chat mode)
-      suggestModeSwitch: tool({
-        description: 'Suggest switching to Agent Mode when a task requires tools and capabilities not available in Chat Mode.',
-        parameters: z.object({
-          reason: z.string().describe('Explanation of why Agent Mode would be better for this task'),
-          capabilities: z.array(z.string()).describe('List of specific Agent Mode capabilities that would help'),
-          userRequest: z.string().describe('The original user request that triggered this suggestion')
-        }),
-        execute: async ({ reason, capabilities, userRequest }) => {
-          return {
-            suggestion: 'switch_to_agent_mode',
-            reason,
-            capabilities,
-            userRequest,
-            message: `This request would be much better handled in Agent Mode. Would you like me to switch to Agent Mode and help you with this task using advanced tools and capabilities?`,
-            autoSwitchRecommended: true
+            keyPoints,            suggestions: ['Keep it concise', 'Use professional tone', 'Include clear call-to-action']
           };
         },
       })
@@ -327,50 +306,13 @@ Always be proactive in suggesting how you can help accomplish the user's goals. 
     headers.forEach((value, key) => {
       response.headers.set(key, value);
     });
-    return response;
-  }  // Normal chat mode - simple conversation with limited tools
+    return response;  }  // Normal chat mode - simple conversation with no tools
   const result = streamText({
     ...baseConfig,
-    tools: {
-      // Mode switching suggestion (only tool available in chat mode)
-      suggestModeSwitch: tool({
-        description: 'Suggest switching to Agent Mode when a task requires tools and capabilities not available in Chat Mode.',
-        parameters: z.object({
-          reason: z.string().describe('Explanation of why Agent Mode would be better for this task'),
-          capabilities: z.array(z.string()).describe('List of specific Agent Mode capabilities that would help'),
-          userRequest: z.string().describe('The original user request that triggered this suggestion')
-        }),
-        execute: async ({ reason, capabilities, userRequest }) => {
-          return {
-            suggestion: 'switch_to_agent_mode',
-            reason,
-            capabilities,
-            userRequest,
-            message: `This request would be much better handled in Agent Mode. Would you like me to switch to Agent Mode and help you with this task using advanced tools and capabilities?`,
-            autoSwitchRecommended: true
-          };
-        },
-      })
-    },
-    system: `You are a helpful AI assistant in Chat Mode. You can engage in natural conversation and answer questions, but you only have access to one tool: the ability to suggest switching to Agent Mode.
+    tools: {},
+    system: `You are a helpful AI assistant in Chat Mode. You can engage in natural conversation, answer questions, and provide helpful information on a wide variety of topics.
 
-When a user asks something that would be much better handled with tools and actions, you should use the suggestModeSwitch tool. Specifically, suggest Agent Mode when users ask for:
-
-- Mathematical calculations or data analysis
-- Code generation or programming help
-- File creation or management
-- Complex task planning and project management
-- Web searches or real-time information
-- Weather forecasts
-- Email composition or professional writing assistance
-- Multi-step problem solving that requires tools
-
-When you detect such requests, immediately use the suggestModeSwitch tool with:
-1. A clear reason why their request would benefit from Agent Mode
-2. The specific capabilities Agent Mode would provide
-3. The original user request
-
-Be conversational and helpful for simple questions, but proactively suggest Agent Mode for complex tasks that require tools.`,
+Be conversational, friendly, and helpful. Provide thoughtful responses to user questions and engage in meaningful dialogue.`,
   });
 
   const response = result.toDataStreamResponse();
