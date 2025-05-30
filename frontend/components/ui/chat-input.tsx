@@ -67,16 +67,12 @@ export function ChatInput({
     setFiles(null)
   }
   
-  return (
-    <motion.div
-      className="flex flex-col w-full relative"
+  return (    <motion.div
+      className="flex flex-col w-full fixed left-1/2"
       initial={false}
       animate={{
-        position: hasMessages ? "fixed" : "absolute",
         top: hasMessages ? "auto" : "50%",
         bottom: hasMessages ? "16px" : "auto",
-        left: hasMessages ? "50%" : "50%",
-        right: "auto",
         transform: hasMessages ? "translateX(-50%)" : "translate(-50%, -50%)",
         zIndex: hasMessages ? 50 : 10,
         width: hasMessages ? "calc(100% - 32px)" : "100%",
@@ -84,10 +80,10 @@ export function ChatInput({
       }}
       transition={{ 
         type: "spring", 
-        stiffness: 200, 
-        damping: 25,
-        duration: 1.2
-      }}    >      {/* Agent/Chat Mode Indicator - Positioned at top center of entire card */}
+        stiffness: 300, 
+        damping: 35,
+        mass: 0.8
+      }}>      {/* Agent/Chat Mode Indicator - Positioned at top center of entire card */}
       <AnimatePresence>        {isFocused && mode === 'agent' && (
           <motion.div 
             className="absolute left-1/2 transform -translate-x-1/2 -top-10 z-0 flex items-center gap-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-md shadow-sm pointer-events-none"
