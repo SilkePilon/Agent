@@ -66,7 +66,7 @@ interface ModelCardProps {
 }
 
 function ModelCard({ model, isSelected, onClick }: ModelCardProps) {
-  const ProviderIcon = getProviderIcon(model.provider)
+  const ProviderIcon = getProviderIcon(model.id) // Dynamically fetch the correct icon based on the model ID or provider
 
   const formatPrice = (price?: number) => {
     if (price === undefined) return "N/A"
@@ -216,7 +216,7 @@ function ModelCard({ model, isSelected, onClick }: ModelCardProps) {
             </CardContent>
           </Card>
         </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-xs">
+        <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs rounded-md shadow-md p-3 border border-border">
           <div className="space-y-2">
             <div className="font-medium">{model.name}</div>
             {model.description && (
