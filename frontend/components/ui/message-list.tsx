@@ -4,6 +4,7 @@ import {
   type Message,
 } from "@/components/ui/chat-message"
 import { TypingIndicator } from "@/components/ui/typing-indicator"
+import { AnimatePresence } from "framer-motion"
 
 type AdditionalMessageOptions = Omit<ChatMessageProps, keyof Message>
 
@@ -52,11 +53,12 @@ export function MessageList({
           </div>
         )
       })}
-      {isTyping && (
-        <div>
-          <TypingIndicator />
-        </div>
-      )}
+      
+      <AnimatePresence>
+        {isTyping && (
+          <TypingIndicator mode={mode} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
