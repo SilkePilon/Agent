@@ -377,19 +377,19 @@ export function SettingsFormContents({
             {provider === 'openrouter' && setSelectedModel && (
                 <div className="space-y-2">
                     <div className="text-xs font-medium text-muted-foreground">Model</div>              <Select
-                        modal={true}
                         value={selectedModel}
                         onValueChange={setSelectedModel}
                         onOpenChange={(open) => {
+                            setSelectOpen(open); // Directly set the open state from the Select's callback
                             if (open) {
-                                setSelectOpen(true);
-                                if (setParentTooltipOpen) setParentTooltipOpen(true); // Ensure main tooltip stays open if applicable
-                                setTimeout(() => searchInputRef.current?.focus(), 0);
-                            } else {
-                                setSelectOpen(false);
-                                if (document.activeElement === searchInputRef.current || searchInputRef.current?.value) {
-                                    setTimeout(() => searchInputRef.current?.focus(), 0);
-                                }
+                                if (setParentTooltipOpen) setParentTooltipOpen(true); // Preserve for tooltip
+                                setTimeout(() => searchInputRef.current?.focus(), 0); // Focus search on open
+                            }
+                            // Removed the 'else' block that attempted to refocus the search input.
+                            // If modelSearchQuery is not empty when closing, also clear it.
+                            // This is a good practice to reset search on close.
+                            if (!open && modelSearchQuery) {
+                                setModelSearchQuery('');
                             }
                         }}
                     >
