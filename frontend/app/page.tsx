@@ -1,6 +1,6 @@
 "use client"
 import { useChat } from '@ai-sdk/react';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { ChatMessages } from "@/components/ui/chat-messages"
@@ -10,8 +10,8 @@ import { type Message } from "@/components/ui/chat-message"
 export default function Home() {
   const [mode, setMode] = useState<'agent' | 'chat'>('chat');
   const [fallbackActive, setFallbackActive] = useState(false);
-  const [provider, setProvider] = useState<'openrouter' | 'google'>('openrouter');
-  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash-preview-05-20:thinking');
+  const [provider, setProvider] = useState<'openrouter' | 'google'>('google');
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash-preview-05-20');
   const [isFocused, setIsFocused] = useState(false);
   const retryAttemptRef = useRef(false);
   
@@ -27,7 +27,6 @@ export default function Home() {
                              errorStr.includes('network error');
     
     if (isOpenRouterError && !retryAttemptRef.current) {
-      console.log('Detected OpenRouter error, will retry with fallback on next message');
       setFallbackActive(true);
       setProvider('google');
       retryAttemptRef.current = true;
@@ -65,13 +64,13 @@ export default function Home() {
         setFallbackActive(false);
         retryAttemptRef.current = false;
       }
+      
+      // Store model information
+      // We'll add this to messages directly based on current provider/model
     }
   });
   
   const enhancedHandleSubmit = useCallback((e?: { preventDefault?: () => void }, options?: { experimental_attachments?: FileList }) => {
-    if (retryAttemptRef.current) {
-      console.log('Submitting with fallback flag set');
-    }
     return handleSubmit(e, options);
   }, [handleSubmit]);
 
@@ -97,7 +96,17 @@ export default function Home() {
           >
             <div className="w-full max-w-3xl">
               <ChatMessages
-                messages={messages as Message[]}
+                messages={messages.map(msg => {
+                  // Add current model information to assistant messages
+                  if (msg.role === 'assistant') {
+                    return {
+                      ...msg,
+                      modelId: selectedModel,
+                      modelProvider: provider
+                    } as Message;
+                  }
+                  return msg as Message;
+                })}
                 stop={stop}
                 mode={mode}
                 setMode={setMode}

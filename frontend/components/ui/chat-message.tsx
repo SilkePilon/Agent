@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { motion } from "framer-motion"
 import { Ban, ChevronRight, Code2, Loader2, Terminal, Bot, ArrowRight } from "lucide-react"
+import { Gemini, OpenRouter } from '@lobehub/icons'
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -136,6 +137,8 @@ export interface Message {
   experimental_attachments?: Attachment[]
   toolInvocations?: ToolInvocation[]
   parts?: MessagePart[]
+  modelId?: string
+  modelProvider?: 'openrouter' | 'google'
 }
 
 export interface ChatMessageProps extends Message {
@@ -160,6 +163,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   mode,
   setMode,
   append,
+  modelId,
+  modelProvider,
 }) => {
   const files = useMemo(() => {
     return experimental_attachments?.map((attachment) => {
@@ -221,6 +226,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           >
             <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
               <MarkdownRenderer>{part.text}</MarkdownRenderer>
+              
+              {/* Show model badge inside the bubble for assistant messages */}
+              {!isUser && index === 0 && role === "assistant" && (
+                <ModelBadge modelProvider={modelProvider} modelId={modelId} />
+              )}
+              
               {actions ? (
                 <div className="absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground opacity-0 transition-opacity group-hover/message:opacity-100">
                   {actions}
@@ -228,6 +239,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               ) : null}
             </div>
 
+            
             {showTimeStamp && createdAt ? (
               <time
                 dateTime={createdAt.toISOString()}
@@ -259,13 +271,23 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   }
 
   if (toolInvocations && toolInvocations.length > 0) {
-    return <ToolCall toolInvocations={toolInvocations} mode={mode} setMode={setMode} append={append} />
+    return (
+      <div className="flex flex-col">
+        <ToolCall toolInvocations={toolInvocations} mode={mode} setMode={setMode} append={append} />
+      </div>
+    )
   }
 
   return (
     <div className={cn("flex flex-col w-full max-w-full overflow-x-hidden", isUser ? "items-end" : "items-start")}>
       <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
         <MarkdownRenderer>{content}</MarkdownRenderer>
+        
+        {/* Show model badge inside the bubble for assistant messages */}
+        {!isUser && role === "assistant" && (
+          <ModelBadge modelProvider={modelProvider} modelId={modelId} />
+        )}
+        
         {actions ? (
           <div className="absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground opacity-0 transition-opacity group-hover/message:opacity-100">
             {actions}
@@ -293,6 +315,41 @@ function dataUrlToUint8Array(data: string) {
   const buf = Buffer.from(base64, "base64")
   return new Uint8Array(buf)
 }
+
+interface ModelBadgeProps {
+  modelId?: string
+  modelProvider?: 'openrouter' | 'google'
+}
+
+const ModelBadge: React.FC<ModelBadgeProps> = ({ modelId, modelProvider }) => {
+  // Only render if we have valid provider and model information
+  if (!modelProvider || !modelId) {
+    return null;
+  }
+  
+  return (
+    <motion.div 
+      className="flex items-center gap-1.5 text-xs mt-2 px-2 py-1 bg-muted/50 dark:bg-muted/30 border border-border/50 rounded-md w-fit opacity-75"
+      initial={{ opacity: 0, y: -5 }}
+      animate={{ opacity: 0.75, y: 0 }}
+      transition={{ 
+        type: "spring", 
+        stiffness: 500, 
+        damping: 30,
+        delay: 0.1
+      }}
+    >
+      {modelProvider === 'google' ? (
+        <Gemini className="h-3 w-3 text-purple-600" />
+      ) : modelProvider === 'openrouter' ? (
+        <OpenRouter className="h-3 w-3 text-[#6467f2]" />
+      ) : null}
+      <span className="text-muted-foreground font-medium text-[10px]">
+        {modelId}
+      </span>
+    </motion.div>
+  );
+};
 
 const ReasoningBlock = ({ part }: { part: ReasoningPart }) => {
   const [isOpen, setIsOpen] = useState(false)

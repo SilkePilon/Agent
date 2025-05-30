@@ -224,8 +224,26 @@ export function MessageInput({
               className
             )}
             {...(props.allowAttachments
-              ? omit(props, ["allowAttachments", "files", "setFiles", "mode", "setMode"])
-              : omit(props, ["allowAttachments", "mode", "setMode"]))}
+              ? omit(props, [
+                  "allowAttachments", 
+                  "files", 
+                  "setFiles", 
+                  "mode", 
+                  "setMode", 
+                  "provider", 
+                  "setProvider", 
+                  "selectedModel", 
+                  "setSelectedModel"
+                ])
+              : omit(props, [
+                  "allowAttachments", 
+                  "mode", 
+                  "setMode", 
+                  "provider", 
+                  "setProvider", 
+                  "selectedModel", 
+                  "setSelectedModel"
+                ]))}
           />
 
           {props.allowAttachments && (

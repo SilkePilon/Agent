@@ -22,13 +22,16 @@ export async function POST(req: Request) {
   } else {
     // OpenRouter provider
     modelToUse = openrouter(selectedModel);
-  }
-
-  // Base configuration
+  }  // Base configuration
   const baseConfig = {
     model: modelToUse,
     messages,
   };
+  
+  // Create headers to send model information back to the client
+  const headers = new Headers();
+  headers.set('X-AI-Model-ID', selectedModel);
+  headers.set('X-AI-Provider', provider);
 
   // Agent mode with tools and multi-step reasoning
   if (mode === 'agent') {
@@ -228,8 +231,7 @@ function generatedFunction() {
               temperature: Math.round(Math.random() * (85 - 35) + 35),
               condition: ['Sunny', 'Cloudy', 'Rainy', 'Partly Cloudy'][Math.floor(Math.random() * 4)]
             }));
-          }
-
+          }          // We can't add headers to this direct result object
           return result;
         },
       }),      // Email composition helper
@@ -320,7 +322,12 @@ When a user gives you a task:
 Always be proactive in suggesting how you can help accomplish the user's goals. If you need clarification, ask specific questions to better understand their needs.`,
     });
 
-    return result.toDataStreamResponse();
+    const response = result.toDataStreamResponse();
+    // Add model information to the response headers
+    headers.forEach((value, key) => {
+      response.headers.set(key, value);
+    });
+    return response;
   }  // Normal chat mode - simple conversation with limited tools
   const result = streamText({
     ...baseConfig,
@@ -366,5 +373,10 @@ When you detect such requests, immediately use the suggestModeSwitch tool with:
 Be conversational and helpful for simple questions, but proactively suggest Agent Mode for complex tasks that require tools.`,
   });
 
-  return result.toDataStreamResponse();
+  const response = result.toDataStreamResponse();
+  // Add model information to the response headers
+  headers.forEach((value, key) => {
+    response.headers.set(key, value);
+  });
+  return response;
 }
