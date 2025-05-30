@@ -377,6 +377,7 @@ export function SettingsFormContents({
             {provider === 'openrouter' && setSelectedModel && (
                 <div className="space-y-2">
                     <div className="text-xs font-medium text-muted-foreground">Model</div>              <Select
+                        modal={true}
                         value={selectedModel}
                         onValueChange={setSelectedModel}
                         onOpenChange={(open) => {

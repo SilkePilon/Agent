@@ -75,7 +75,7 @@ export function ChatInput({
         bottom: hasMessages ? "16px" : "auto",
         transform: hasMessages ? "translateX(-50%)" : "translate(-50%, -50%)",
         zIndex: hasMessages ? 50 : 10,
-        width: hasMessages ? "calc(100% - 32px)" : "100%",
+        width: "calc(100% - 32px)", // Changed this line
         maxWidth: hasMessages ? "768px" : "512px",
       }}
       transition={{ 
