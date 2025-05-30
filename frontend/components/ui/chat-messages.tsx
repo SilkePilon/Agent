@@ -38,6 +38,7 @@ export function ChatMessages({
 }: ChatMessagesProps) {
   const lastMessage = messages.at(-1)
   const isTyping = lastMessage?.role === "user"
+  const lastMessageContent = messages.at(-1)?.content; // Get last message content
 
   const messagesRef = useRef(messages)
   messagesRef.current = messages
@@ -165,7 +166,7 @@ export function ChatMessages({
     handleScroll,
     shouldAutoScroll,
     handleTouchStart,
-  } = useAutoScroll([messages])
+  } = useAutoScroll([messages, lastMessageContent]) // Add lastMessageContent to dependencies
 
   if (messages.length === 0) {
     return null
