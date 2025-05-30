@@ -1,10 +1,9 @@
 "use client"
 
 import * as React from "react" // Added Info and DollarSign icons
-import { Bot, MessageCircle, Settings, ChevronDown, DollarSign, Info, Search, Loader2 } from "lucide-react"
-import { motion } from "framer-motion"
-import { Gemini, OpenRouter } from '@lobehub/icons'
-
+import { Bot, MessageCircle, Settings, ChevronDown, DollarSign, Info, Search, Loader2, Brain } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Gemini, OpenRouter, OpenAI, Anthropic, Mistral, Meta, Cohere, Gemma, Perplexity, Qwen, Grok } from '@lobehub/icons'
 import { cn } from "@/lib/utils"
 import { getAllModels, type ModelOption } from "@/lib/models"
 import { Badge } from "@/components/ui/badge"
@@ -14,11 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer"
 
-// Scrolling text component for long model names
+
 interface ScrollingTextProps {
     text: string
     className?: string
-    maxWidth?: number
+    maxWidth?: number   
     isParentHovered?: boolean
 }
 
@@ -100,6 +99,44 @@ const formatPricePerMillionTokens = (price?: number | string): string => {
     })} / 1M`;
 };
 
+// Helper function to get model icon
+const getModelIcon = (model: ModelOption): React.ReactNode => {
+    const modelIdLower = model.id.toLowerCase();
+    const modelNameLower = model.name.toLowerCase();
+
+    if (modelIdLower.includes('openai') || modelNameLower.includes('openai')) {
+        return <OpenAI className="h-3.5 w-3.5 text-green-500" />;
+    }
+    if (modelIdLower.includes('claude') || modelNameLower.includes('claude')) {
+        return <Anthropic className="h-3.5 w-3.5 text-orange-500" />;
+    }
+    if (modelIdLower.includes('gemini') || modelNameLower.includes('gemini')) {
+        return <Gemini className="h-3.5 w-3.5 text-purple-600" />;
+    }
+    if (modelIdLower.includes('mistral') || modelIdLower.includes('mixtral') || modelNameLower.includes('mistral') || modelNameLower.includes('mixtral')) {
+        return <Mistral className="h-3.5 w-3.5 text-yellow-500" />;
+    }
+    if (modelIdLower.includes('llama') || modelNameLower.includes('llama')) {
+        return <Meta className="h-3.5 w-3.5 text-blue-500" />;
+    }
+    if (modelIdLower.includes('cohere') || modelNameLower.includes('cohere')) {
+        return <Cohere className="h-3.5 w-3.5 text-red-500" />;
+    }
+    if (modelIdLower.includes('gemma') || modelNameLower.includes('gemma')) {
+        return <Gemma.Simple className="h-3.5 w-3.5 text-red-500" />;
+    }
+    if (modelIdLower.includes('perplexity') || modelNameLower.includes('perplexity')) {
+        return <Perplexity.Color className="h-3.5 w-3.5" />;
+    }
+    if (modelIdLower.includes('qwen') || modelNameLower.includes('qwen')) {
+        return <Qwen className="h-3.5 w-3.5" />;
+    }
+    if (modelIdLower.includes('xai') || modelNameLower.includes('xai')) {
+        return <Grok className="h-3.5 w-3.5" />;
+    }
+    return <Brain className="h-3.5 w-3.5 text-muted-foreground" />; // Default icon
+};
+
 // Component for model item content with shared hover state
 interface ModelItemContentProps {
     model: ModelOption
@@ -134,20 +171,17 @@ function ModelItemContent({ model }: ModelItemContentProps) {
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                 >
-                    <div className="w-full text-left">
-                        <ScrollingText
-                            text={model.name}
-                            className="font-medium text-foreground text-left"
-                            maxWidth={224}
-                            isParentHovered={isHovered}
-                        />
-                    </div>                    {model.description && (
-                        <div className="w-full overflow-hidden text-left">
-                            <div className="text-muted-foreground text-xs truncate block max-w-[224px] text-left prose prose-xs max-w-none prose-p:my-0 prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-strong:font-semibold prose-em:italic">
-                                <MarkdownRenderer>{model.description}</MarkdownRenderer>
-                            </div>
+                    <div className="flex items-center gap-2 w-full text-left">
+                        <div className="flex-shrink-0">{getModelIcon(model)}</div>
+                        <div className="flex-grow min-w-0"> {/* Ensure this div can shrink and grow */}
+                            <ScrollingText
+                                text={model.name}
+                                className="font-medium text-foreground text-left"
+                                maxWidth={190} // Adjusted maxWidth to account for icon
+                                isParentHovered={isHovered}
+                            />
                         </div>
-                    )}
+                    </div>
                 </div>
             </TooltipTrigger>      
             <TooltipContent
@@ -157,7 +191,10 @@ function ModelItemContent({ model }: ModelItemContentProps) {
                 className="max-w-xs p-0 bg-background border border-border shadow-md rounded-lg overflow-hidden z-[9999]"
             >
                 <div className="p-3 space-y-1.5"> {/* Adjusted padding to inner div and space-y */}
-                    <div className="font-medium text-foreground">{model.name}</div>                    {model.description && (
+                    <div className="flex items-center gap-2 font-medium text-foreground">
+                        {getModelIcon(model)}
+                        {model.name}
+                    </div>                    {model.description && (
                         <div className="text-xs text-muted-foreground whitespace-normal leading-relaxed prose prose-xs max-w-none prose-p:my-1 prose-code:text-xs prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-strong:font-semibold prose-em:italic">
                             <MarkdownRenderer>{model.description}</MarkdownRenderer>
                         </div>
