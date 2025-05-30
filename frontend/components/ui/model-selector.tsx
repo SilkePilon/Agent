@@ -100,11 +100,11 @@ function ModelCard({ model, isSelected, onClick }: ModelCardProps) {
         <TooltipTrigger asChild>
           <Card
             className={cn(
-              "relative cursor-pointer transition-all duration-200 hover:shadow-md group",
-              "border rounded-xl p-0 overflow-hidden",
+              "relative cursor-pointer transition-all duration-300 hover:shadow-md group",
+              "border-2 rounded-xl p-0 overflow-hidden",
               isSelected
                 ? "border-primary shadow-md bg-primary/5"
-                : "border-border hover:border-muted-foreground/30"
+                : "border-border hover:border-primary/50"
             )}
             onClick={onClick}
           >
