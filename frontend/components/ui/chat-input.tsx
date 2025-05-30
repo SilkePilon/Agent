@@ -27,6 +27,7 @@ interface ChatInputProps {
   hasMessages?: boolean
   isFocused?: boolean
   setIsFocused?: (focused: boolean) => void
+  clearMessages?: () => void
 }
 
 function createFileList(files: File[] | FileList): FileList {
@@ -53,6 +54,7 @@ export function ChatInput({
   hasMessages = false,
   isFocused = false,
   setIsFocused,
+  clearMessages,
   className,
 }: ChatInputProps) {
   const [files, setFiles] = useState<File[] | null>(null)
@@ -143,8 +145,7 @@ export function ChatInput({
             <span className="font-medium">Chat Mode Active</span>
           </motion.div>
         )}
-      </AnimatePresence>      <form onSubmit={onSubmit} className="relative z-10">
-        <MessageInput
+      </AnimatePresence>      <form onSubmit={onSubmit} className="relative z-10">        <MessageInput
           value={input}
           onChange={handleInputChange}
           allowAttachments
@@ -159,6 +160,8 @@ export function ChatInput({
           setProvider={setProvider}
           selectedModel={selectedModel}
           setSelectedModel={setSelectedModel}
+          clearMessages={clearMessages}
+          hasMessages={hasMessages}
           onFocus={() => setIsFocused?.(true)}
           onBlur={() => setIsFocused?.(false)}
         />

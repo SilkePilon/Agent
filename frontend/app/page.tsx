@@ -40,7 +40,7 @@ export default function Home() {
   }, []);
   
   // Chat hook with error handling
-  const { messages, input, handleInputChange, handleSubmit, isLoading, stop, append } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, stop, append, setMessages } = useChat({
     body: { 
       mode,
       retryWithFallback: retryAttemptRef.current,
@@ -73,6 +73,11 @@ export default function Home() {
   const enhancedHandleSubmit = useCallback((e?: { preventDefault?: () => void }, options?: { experimental_attachments?: FileList }) => {
     return handleSubmit(e, options);
   }, [handleSubmit]);
+
+  // Function to clear all messages
+  const clearMessages = useCallback(() => {
+    setMessages([]);
+  }, [setMessages]);
 
   return (
     <motion.div 
@@ -132,6 +137,7 @@ export default function Home() {
         hasMessages={messages.length > 0}
         isFocused={isFocused}
         setIsFocused={setIsFocused}
+        clearMessages={clearMessages}
       />
     </motion.div>
   );

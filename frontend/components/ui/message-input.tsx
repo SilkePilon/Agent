@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowUp, Info, Loader2, Mic, Paperclip, Square, Bot, MessageCircle, Settings } from "lucide-react"
+import { ArrowUp, Info, Loader2, Mic, Paperclip, Square, Bot, MessageCircle, Settings, Trash2 } from "lucide-react"
 import { omit } from "remeda"
 
 import { cn } from "@/lib/utils"
@@ -28,6 +28,8 @@ interface MessageInputBaseProps
   setProvider?: (provider: 'openrouter' | 'google') => void
   selectedModel?: string
   setSelectedModel?: (model: string) => void
+  clearMessages?: () => void
+  hasMessages?: boolean
 }
 
 interface MessageInputWithoutAttachmentProps extends MessageInputBaseProps {
@@ -233,7 +235,9 @@ export function MessageInput({
                   "provider", 
                   "setProvider", 
                   "selectedModel", 
-                  "setSelectedModel"
+                  "setSelectedModel",
+                  "clearMessages",
+                  "hasMessages"
                 ])
               : omit(props, [
                   "allowAttachments", 
@@ -242,7 +246,9 @@ export function MessageInput({
                   "provider", 
                   "setProvider", 
                   "selectedModel", 
-                  "setSelectedModel"
+                  "setSelectedModel",
+                  "clearMessages",
+                  "hasMessages"
                 ]))}
           />
 
@@ -277,6 +283,50 @@ export function MessageInput({
       </div>
 
       <div className="absolute right-3 top-3 z-20 flex gap-2">
+        {/* Delete Conversation Button */}
+        <AnimatePresence>
+          {props.hasMessages && props.clearMessages && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, x: 10 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1, 
+                x: 0,
+                transition: { 
+                  type: "spring", 
+                  stiffness: 300, 
+                  damping: 25 
+                }
+              }}
+              exit={{ 
+                opacity: 0, 
+                scale: 0.8, 
+                x: 10,
+                transition: { 
+                  type: "spring", 
+                  stiffness: 350, 
+                  damping: 30 
+                }
+              }}
+            >
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                className="h-8 w-8 group hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                aria-label="Delete conversation"
+                onClick={() => {
+                  if (props.clearMessages) {
+                    props.clearMessages()
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         {/* Settings Tooltip */}
         {props.mode && props.setMode && (
           <SettingsTooltip
