@@ -41,6 +41,16 @@ export interface ModelOption {
   };
   contextLength?: number;
   description?: string;
+  created?: number;
+  architecture?: {
+    inputModalities: string[];
+    outputModalities: string[];
+    tokenizer: string;
+  };
+  topProvider?: {
+    isModerated: boolean;
+  };
+  supportedParameters?: string[];
 }
 
 // Google Gemini models (fixed options)
@@ -71,9 +81,7 @@ export async function fetchOpenRouterModels(): Promise<ModelOption[]> {
       throw new Error('Failed to fetch OpenRouter models');
     }
 
-    const data: OpenRouterModelsResponse = await response.json();
-    
-    // Convert to our ModelOption format and filter for relevant models
+    const data: OpenRouterModelsResponse = await response.json();    // Convert to our ModelOption format and filter for relevant models
     cachedModels = data.data
       .map(model => ({
         id: model.id,
@@ -84,7 +92,17 @@ export async function fetchOpenRouterModels(): Promise<ModelOption[]> {
           completion: parseFloat(model.pricing.completion)
         },
         contextLength: model.context_length,
-        description: model.description
+        description: model.description,
+        created: model.created,
+        architecture: {
+          inputModalities: model.architecture.input_modalities,
+          outputModalities: model.architecture.output_modalities,
+          tokenizer: model.architecture.tokenizer
+        },
+        topProvider: {
+          isModerated: model.top_provider.is_moderated
+        },
+        supportedParameters: model.supported_parameters
       }))
       .sort((a, b) => {
         // Sort by prompt price, then by name
