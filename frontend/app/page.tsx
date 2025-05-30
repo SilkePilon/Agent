@@ -15,6 +15,9 @@ export default function Home() {
   const [isFocused, setIsFocused] = useState(false);
   const retryAttemptRef = useRef(false);
   
+  // Track submitted feedback for each message
+  const [submittedFeedback, setSubmittedFeedback] = useState<Record<string, "thumbs-up" | "thumbs-down">>({});
+  
   // Custom error handler for the chat
   const handleChatError = useCallback(async (error: Error) => {
     console.error('Chat error detected:', error);
@@ -77,7 +80,6 @@ export default function Home() {
   const clearMessages = useCallback(() => {
     setMessages([]);
   }, [setMessages]);
-
   // Handle feedback submission
   const handleSubmitFeedback = useCallback(async (
     messageId: string, 
@@ -87,6 +89,14 @@ export default function Home() {
     console.log('Feedback submitted:', { messageId, feedback, rating });
     // Here you would typically send the feedback to your backend
     // Example: await fetch('/api/feedback', { method: 'POST', body: JSON.stringify({ messageId, feedback, rating }) })
+  }, []);
+
+  // Handle feedback submitted (for state tracking)
+  const handleFeedbackSubmitted = useCallback((messageId: string, feedback: "thumbs-up" | "thumbs-down") => {
+    setSubmittedFeedback(prev => ({
+      ...prev,
+      [messageId]: feedback
+    }));
   }, []);
 
   // Handle response retry
@@ -155,6 +165,8 @@ export default function Home() {
                 onSubmitFeedback={handleSubmitFeedback}
                 onRetryResponse={handleRetryResponse}
                 setMessages={setMessages as any}
+                submittedFeedback={submittedFeedback}
+                onFeedbackSubmitted={handleFeedbackSubmitted}
               />
             </div>
           </motion.div>

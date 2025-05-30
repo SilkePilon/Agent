@@ -31,6 +31,8 @@ interface ChatMessagesProps {
   setMode?: (mode: 'agent' | 'chat') => void
   append?: (message: { role: "user"; content: string }) => void
   stop?: () => void
+  submittedFeedback?: Record<string, "thumbs-up" | "thumbs-down">
+  onFeedbackSubmitted?: (messageId: string, feedback: "thumbs-up" | "thumbs-down") => void
 }
 
 export function ChatMessages({
@@ -44,6 +46,8 @@ export function ChatMessages({
   setMode,
   append,
   stop,
+  submittedFeedback = {},
+  onFeedbackSubmitted,
 }: ChatMessagesProps) {
   const [feedbackDialog, setFeedbackDialog] = useState<{
     isOpen: boolean
@@ -138,8 +142,12 @@ export function ChatMessages({
       setMessages(updatedMessages)
     }
   }, [setMessages, stop])
-
   const handleFeedbackClick = useCallback((messageId: string, feedbackType: "thumbs-up" | "thumbs-down") => {
+    // Don't allow feedback if already submitted
+    if (submittedFeedback[messageId]) {
+      return
+    }
+
     if (onSubmitFeedback) {
       setFeedbackDialog({
         isOpen: true,
@@ -148,14 +156,17 @@ export function ChatMessages({
       })
     } else if (onRateResponse) {
       onRateResponse(messageId, feedbackType)
+      // Mark as submitted for simple rating
+      onFeedbackSubmitted?.(messageId, feedbackType)
     }
-  }, [onSubmitFeedback, onRateResponse])
-
+  }, [onSubmitFeedback, onRateResponse, submittedFeedback, onFeedbackSubmitted])
   const handleFeedbackSubmit = useCallback(async (feedback: string, rating: "thumbs-up" | "thumbs-down") => {
     if (onSubmitFeedback && feedbackDialog.messageId) {
       await onSubmitFeedback(feedbackDialog.messageId, feedback, rating)
+      // Mark as submitted after successful submission
+      onFeedbackSubmitted?.(feedbackDialog.messageId, rating)
     }
-  }, [onSubmitFeedback, feedbackDialog.messageId])
+  }, [onSubmitFeedback, feedbackDialog.messageId, onFeedbackSubmitted])
 
   const handleFeedbackClose = useCallback(() => {
     setFeedbackDialog(prev => ({ ...prev, isOpen: false }))
@@ -166,61 +177,103 @@ export function ChatMessages({
       onRetryResponse(messageId)
     }
   }, [onRetryResponse])
-
   const messageOptions = useCallback(
-    (message: Message) => ({
-      actions: message.role === "assistant" ? (
-        <>
-          <div className="border-r pr-1">
-            <CopyButton
-              content={message.content}
-              copyMessage="Copied response to clipboard!"
-            />
-          </div>
-          {(onRateResponse || onSubmitFeedback) && (
-            <>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-6 w-6 hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 transition-colors"
-                onClick={() => handleFeedbackClick(message.id, "thumbs-up")}
-                title="Good response"
-              >
-                <ThumbsUp className="h-4 w-4" />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-6 w-6 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
-                onClick={() => handleFeedbackClick(message.id, "thumbs-down")}
-                title="Poor response"
-              >
-                <ThumbsDown className="h-4 w-4" />
-              </Button>
-            </>
-          )}
-          {onRetryResponse && (
-            <div className="border-l pl-1">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-6 w-6 hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors"
-                onClick={() => handleRetry(message.id)}
-                title="Regenerate response"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
+    (message: Message) => {
+      const messageHasFeedback = !!submittedFeedback[message.id]
+      const submittedFeedbackType = submittedFeedback[message.id]
+
+      return {
+        actions: message.role === "assistant" ? (
+          <>
+            <div className="border-r pr-1">
+              <CopyButton
+                content={message.content}
+                copyMessage="Copied response to clipboard!"
+              />
             </div>
-          )}
-        </>
-      ) : message.role === "user" ? (
-        <CopyButton
-          content={message.content}
-          copyMessage="Copied message to clipboard!"
-        />
-      ) : null,
-    }),
-    [handleFeedbackClick, onRetryResponse, handleRetry, onRateResponse, onSubmitFeedback]
+            {(onRateResponse || onSubmitFeedback) && (
+              <>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  disabled={messageHasFeedback}
+                  className={cn(
+                    "h-6 w-6 transition-colors",
+                    messageHasFeedback && submittedFeedbackType === "thumbs-up"
+                      ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400 cursor-default"
+                      : messageHasFeedback
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400"
+                  )}
+                  onClick={() => handleFeedbackClick(message.id, "thumbs-up")}
+                  title={
+                    messageHasFeedback && submittedFeedbackType === "thumbs-up"
+                      ? "Positive feedback submitted"
+                      : messageHasFeedback
+                      ? "Feedback already submitted"
+                      : "Good response"
+                  }
+                >
+                  <ThumbsUp 
+                    className={cn(
+                      "h-4 w-4",
+                      messageHasFeedback && submittedFeedbackType === "thumbs-up" && "fill-current"
+                    )} 
+                  />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  disabled={messageHasFeedback}
+                  className={cn(
+                    "h-6 w-6 transition-colors",
+                    messageHasFeedback && submittedFeedbackType === "thumbs-down"
+                      ? "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 cursor-default"
+                      : messageHasFeedback
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                  )}
+                  onClick={() => handleFeedbackClick(message.id, "thumbs-down")}
+                  title={
+                    messageHasFeedback && submittedFeedbackType === "thumbs-down"
+                      ? "Negative feedback submitted"
+                      : messageHasFeedback
+                      ? "Feedback already submitted"
+                      : "Poor response"
+                  }
+                >
+                  <ThumbsDown 
+                    className={cn(
+                      "h-4 w-4",
+                      messageHasFeedback && submittedFeedbackType === "thumbs-down" && "fill-current"
+                    )} 
+                  />
+                </Button>
+              </>
+            )}
+            {onRetryResponse && (
+              <div className="border-l pl-1">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6 hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors"
+                  onClick={() => handleRetry(message.id)}
+                  title="Regenerate response"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </>
+        ) : message.role === "user" ? (
+          <CopyButton
+            content={message.content}
+            copyMessage="Copied message to clipboard!"
+          />
+        ) : null,
+      }
+    },
+    [handleFeedbackClick, onRetryResponse, handleRetry, onRateResponse, onSubmitFeedback, submittedFeedback]
   )
 
   const {
