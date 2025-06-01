@@ -1,7 +1,10 @@
 "use client"
 import { useChat } from '@ai-sdk/react';
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useAuth } from '@clerk/nextjs'; // For client-side auth state
+import { checkAndIncrementMessageCount } from '../actions/messageActions'; // The server action
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 import { ChatMessages } from "@/components/ui/chat-messages"
 import { ChatInput } from "@/components/ui/chat-input"
@@ -15,6 +18,7 @@ export default function Home() {
   const [isFocused, setIsFocused] = useState(false);
   const [messageActionsAlwaysVisible, setMessageActionsAlwaysVisible] = useState(false);
   const retryAttemptRef = useRef(false);
+  const { userId } = useAuth();
   
   // Track submitted feedback for each message
   const [submittedFeedback, setSubmittedFeedback] = useState<Record<string, "thumbs-up" | "thumbs-down">>({});
@@ -74,9 +78,34 @@ export default function Home() {
     }
   });
   
-  const enhancedHandleSubmit = useCallback((e?: { preventDefault?: () => void }, options?: { experimental_attachments?: FileList }) => {
-    return handleSubmit(e, options);
-  }, [handleSubmit]);
+  const enhancedHandleSubmit = useCallback(async (e?: { preventDefault?: () => void }, options?: { experimental_attachments?: FileList }) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
+
+    if (!userId) {
+      toast.error("You must be logged in to send messages.");
+      return;
+    }
+
+    try {
+      const result = await checkAndIncrementMessageCount();
+
+      if (result.success) {
+        // Proceed with original submission logic
+        handleSubmit(undefined, options); // Pass undefined for event if already handled or not needed by original handleSubmit
+        // toast.success("Message sent!"); // Optional: Consider if this is too noisy
+      } else if (result.limitReached) {
+        toast.error(`You have reached your monthly message limit of 25. Current count: ${result.currentCount}`);
+      } else {
+        console.error("Message sending failed:", result.error);
+        toast.error("Could not send message: " + (result.error || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error checking message limit:", error);
+      toast.error("An error occurred while trying to send your message.");
+    }
+  }, [handleSubmit, userId]);
   // Function to clear all messages
   const clearMessages = useCallback(() => {
     setMessages([]);
