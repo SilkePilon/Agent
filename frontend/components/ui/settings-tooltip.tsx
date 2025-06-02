@@ -136,29 +136,27 @@ export function SettingsFormContents({
             {mode && setMode && (
                 <div className="space-y-2">
                     <div className="text-xs font-medium text-muted-foreground">Mode</div>
-                    <div className="flex gap-1">
-                        <Button
+                    <div className="flex gap-1">                        <Button
                             variant={mode === 'agent' ? 'default' : 'outline'}
                             size="sm"
                             className={cn(
                                 "flex-1 h-8 text-xs transition-all duration-200",
                                 mode === 'agent'
                                     ? "bg-blue-500 hover:bg-blue-600 text-white shadow-sm"
-                                    : "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-foreground"
+                                    : "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-foreground border-2"
                             )}
                             onClick={() => setMode('agent')}
                         >
                             <Bot className="h-3 w-3 mr-1" />
                             Agent
-                        </Button>
-                        <Button
+                        </Button>                        <Button
                             variant={mode === 'chat' ? 'default' : 'outline'}
                             size="sm"
                             className={cn(
                                 "flex-1 h-8 text-xs transition-all duration-200",
                                 mode === 'chat'
                                     ? "bg-green-500 hover:bg-green-600 text-white shadow-sm"
-                                    : "hover:bg-green-50 hover:text-green-600 hover:border-green-200 text-foreground"
+                                    : "hover:bg-green-50 hover:text-green-600 hover:border-green-200 text-foreground border-2"
                             )}
                             onClick={() => setMode('chat')}
                         >
@@ -180,7 +178,7 @@ export function SettingsFormContents({
                             "flex-1 h-8 text-xs transition-all duration-200",
                             provider === 'google'
                                 ? "bg-purple-600 hover:bg-purple-700 text-white" // Active state
-                                : "hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 text-foreground" // Inactive state
+                                : "hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 text-foreground border-2" // Inactive state
                         )}
                         onClick={() => setProvider?.('google')}
                     >
@@ -196,7 +194,7 @@ export function SettingsFormContents({
                             "flex-1 h-8 text-xs transition-all duration-200 group", // Added group for icon hover
                             provider === 'openrouter'
                                 ? "bg-[#6467f2] hover:bg-[#5254d4] text-white" // Active state
-                                : "hover:bg-[#f0f0ff] hover:text-[#6467f2] hover:border-[#d0d1fa] text-foreground" // Inactive state
+                                : "hover:bg-[#f0f0ff] hover:text-[#6467f2] hover:border-[#d0d1fa] text-foreground border-2" // Inactive state
                         )}
                         onClick={() => setProvider?.('openrouter')}                >                  <OpenRouter className={cn(
                             "h-3.5 w-3.5 mr-1",
@@ -221,28 +219,26 @@ export function SettingsFormContents({
             {setMessageActionsAlwaysVisible && (
                 <div className="space-y-2">
                     <div className="text-xs font-medium text-muted-foreground">Message Actions</div>
-                    <div className="flex gap-1">
-                        <Button
+                    <div className="flex gap-1">                        <Button
                             variant={messageActionsAlwaysVisible ? 'default' : 'outline'}
                             size="sm"
                             className={cn(
                                 "flex-1 h-8 text-xs transition-all duration-200",
                                 messageActionsAlwaysVisible
                                     ? "bg-green-500 hover:bg-green-600 text-white shadow-sm"
-                                    : "hover:bg-green-50 hover:text-green-600 hover:border-green-200 text-foreground"
+                                    : "hover:bg-green-50 hover:text-green-600 hover:border-green-200 text-foreground border-2"
                             )}
                             onClick={() => setMessageActionsAlwaysVisible(true)}
                         >
                             Always Visible
-                        </Button>
-                        <Button
+                        </Button>                        <Button
                             variant={!messageActionsAlwaysVisible ? 'default' : 'outline'}
                             size="sm"
                             className={cn(
                                 "flex-1 h-8 text-xs transition-all duration-200",
                                 !messageActionsAlwaysVisible
                                     ? "bg-blue-500 hover:bg-blue-600 text-white shadow-sm"
-                                    : "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-foreground"
+                                    : "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-foreground border-2"
                             )}
                             onClick={() => setMessageActionsAlwaysVisible(false)}
                         >
@@ -287,18 +283,39 @@ export function SettingsTooltip({
     children,
     messageActionsAlwaysVisible = false,
     setMessageActionsAlwaysVisible,
-}: SettingsTooltipProps) {
-    const [isOpen, setIsOpen] = React.useState(false)
+}: SettingsTooltipProps) {    const [isOpen, setIsOpen] = React.useState(false)
     const [isModelSelectorOpen, setIsModelSelectorOpen] = React.useState(false)
+    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null)
 
     // Handle tooltip open/close with model selector consideration
     const handleTooltipOpenChange = (open: boolean) => {
+        // Clear any pending timeout
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current)
+        }
+        
         // Don't close tooltip if model selector is open
         if (!open && isModelSelectorOpen) {
             return
         }
         setIsOpen(open)
     }
+
+    // Handle model selector open state change
+    const handleModelSelectorOpenChange = (open: boolean) => {
+        setIsModelSelectorOpen(open)
+        // If model selector is opening, ensure tooltip stays open
+        if (open) {
+            setIsOpen(true)
+        }
+    }    // Cleanup timeout on unmount
+    React.useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+        }
+    }, [])
 
     const getCurrentProvider = () => {
         if (provider === 'google') return 'Google Gemini'
@@ -313,10 +330,9 @@ export function SettingsTooltip({
         } 
         return 'Default'
     }
-    
-    return (
+      return (
         <TooltipProvider>
-            <Tooltip open={isOpen} onOpenChange={handleTooltipOpenChange}>
+            <Tooltip open={isOpen} onOpenChange={handleTooltipOpenChange} delayDuration={0}>
                 <TooltipTrigger asChild onClick={() => setIsOpen(!isOpen)}>
                     {children}
             </TooltipTrigger>
@@ -324,7 +340,18 @@ export function SettingsTooltip({
                 side="top"
                 className="w-72 p-0 bg-background border border-border shadow-md rounded-lg overflow-hidden"
                 sideOffset={8}
-            >                <SettingsFormContents
+                onPointerEnter={() => setIsOpen(true)}                onPointerLeave={(e) => {
+                    // Don't close if model selector is open or if we're moving to the model selector
+                    if (!isModelSelectorOpen) {
+                        // Add a small delay to prevent premature closing
+                        timeoutRef.current = setTimeout(() => {
+                            if (!isModelSelectorOpen) {
+                                setIsOpen(false)
+                            }
+                        }, 100)
+                    }
+                }}
+            ><SettingsFormContents
                     mode={mode}
                     setMode={setMode}
                     provider={provider}
@@ -335,7 +362,7 @@ export function SettingsTooltip({
                     setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}
                     getCurrentProvider={getCurrentProvider}
                     getCurrentModel={getCurrentModel}
-                    setParentTooltipOpen={setIsOpen} // Pass setIsOpen to allow child to control parent                    onModelSelectorOpenChange={setIsModelSelectorOpen} // Pass model selector state callback
+                    setParentTooltipOpen={setIsOpen} // Pass setIsOpen to allow child to control parent                    onModelSelectorOpenChange={handleModelSelectorOpenChange} // Pass model selector state callback
                 />
             </TooltipContent>
         </Tooltip>
