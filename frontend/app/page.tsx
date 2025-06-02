@@ -5,7 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { ChatMessages } from "@/components/ui/chat-messages"
 import { ChatInput } from "@/components/ui/chat-input"
+import { ChatHistory } from "@/components/ui/chat-history"
 import { type Message } from "@/components/ui/chat-message"
+import { useChatHistory } from "@/hooks/use-chat-history"
 
 export default function Home() {
   const [mode, setMode] = useState<'agent' | 'chat'>('chat');
@@ -15,6 +17,7 @@ export default function Home() {
   const [isFocused, setIsFocused] = useState(false);
   const [messageActionsAlwaysVisible, setMessageActionsAlwaysVisible] = useState(false);
   const retryAttemptRef = useRef(false);
+  const [messageTimestamps, setMessageTimestamps] = useState<Record<string, Date>>({});
   
   // Track submitted feedback for each message
   const [submittedFeedback, setSubmittedFeedback] = useState<Record<string, "thumbs-up" | "thumbs-down">>({});
@@ -41,9 +44,7 @@ export default function Home() {
         retryAttemptRef.current = false;
       }, 5000);
     }
-  }, []);
-  
-  // Chat hook with error handling
+  }, []);    // Chat hook with error handling
   const { messages, input, handleInputChange, handleSubmit, isLoading, stop, append, setMessages } = useChat({
     body: { 
       mode,
@@ -73,13 +74,23 @@ export default function Home() {
       // We'll add this to messages directly based on current provider/model
     }
   });
-  
+  // Chat history management
+  const chatHistory = useChatHistory({
+    messages,
+    setMessages: (newMessages) => setMessages(newMessages),
+    mode,
+    modelId: selectedModel,
+    modelProvider: provider
+  })
   const enhancedHandleSubmit = useCallback((e?: { preventDefault?: () => void }, options?: { experimental_attachments?: FileList }) => {
     return handleSubmit(e, options);
-  }, [handleSubmit]);  // Function to clear all messages
+  }, [handleSubmit]);
+    // Function to clear all messages
   const clearMessages = useCallback(() => {
     setMessages([]);
-  }, [setMessages]);
+    setMessageTimestamps({});
+    chatHistory.newSession();
+  }, [setMessages, chatHistory]);
     // Track model information for UI display
   // Handle feedback submission
   const handleSubmitFeedback = useCallback(async (
@@ -149,16 +160,19 @@ export default function Home() {
             }}
           >
             <div className="w-full max-w-3xl">              <ChatMessages
-                messages={messages.map(msg => {
-                  // Add current model information to assistant messages
-                  if (msg.role === 'assistant') {
-                    return {
-                      ...msg,
-                      modelId: selectedModel,
-                      modelProvider: provider
-                    } as Message;
+                messages={messages.map((msg, index) => {
+                  // Convert AI SDK messages to our UI message format
+                  // Use incremental timestamps for better ordering
+                  const baseTime = new Date()
+                  const messageTime = new Date(baseTime.getTime() - (messages.length - index) * 1000)
+                  
+                  const uiMessage = {
+                    ...msg,
+                    createdAt: messageTimestamps[msg.id] || messageTime,
+                    modelId: msg.role === 'assistant' ? selectedModel : undefined,
+                    modelProvider: msg.role === 'assistant' ? provider : undefined
                   }
-                  return msg as Message;
+                  return uiMessage as Message;
                 })}
                 stop={stop}
                 mode={mode}
@@ -175,27 +189,50 @@ export default function Home() {
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
-
-      {/* Chat Input Container - moves from center to bottom */}      <ChatInput
-        input={input}
-        handleInputChange={handleInputChange}
-        handleSubmit={enhancedHandleSubmit}
-        isGenerating={isLoading}
-        stop={stop}
-        mode={mode}
-        setMode={setMode}
-        provider={provider}
-        setProvider={setProvider}
-        selectedModel={selectedModel}
-        setSelectedModel={setSelectedModel}
-        hasMessages={messages.length > 0}
-        isFocused={isFocused}
-        setIsFocused={setIsFocused}
-        clearMessages={clearMessages}
-        messageActionsAlwaysVisible={messageActionsAlwaysVisible}
-        setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}
-      />
+      </AnimatePresence>      {/* Chat Input Container - moves from center to bottom */}      
+      <div className="relative">
+        {/* Chat History Button - positioned absolutely */}
+        {messages.length > 0 && (
+          <motion.div
+            className="fixed left-4 bottom-20 z-50"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ delay: 0.2 }}
+          >            <ChatHistory
+              onLoadSession={(session) => {
+                setMessageTimestamps({})
+                chatHistory.loadSession(session)
+              }}
+              onNewChat={() => {
+                setMessageTimestamps({})
+                chatHistory.newSession()
+              }}
+              currentSessionId={chatHistory.currentSessionId}
+            />
+          </motion.div>
+        )}
+        
+        <ChatInput
+          input={input}
+          handleInputChange={handleInputChange}
+          handleSubmit={enhancedHandleSubmit}
+          isGenerating={isLoading}
+          stop={stop}
+          mode={mode}
+          setMode={setMode}
+          provider={provider}
+          setProvider={setProvider}
+          selectedModel={selectedModel}
+          setSelectedModel={setSelectedModel}
+          hasMessages={messages.length > 0}
+          isFocused={isFocused}
+          setIsFocused={setIsFocused}
+          clearMessages={clearMessages}
+          messageActionsAlwaysVisible={messageActionsAlwaysVisible}
+          setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}
+        />
+      </div>
     </motion.div>
   );
 }
