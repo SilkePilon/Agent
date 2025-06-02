@@ -76,11 +76,11 @@ export default function Home() {
   
   const enhancedHandleSubmit = useCallback((e?: { preventDefault?: () => void }, options?: { experimental_attachments?: FileList }) => {
     return handleSubmit(e, options);
-  }, [handleSubmit]);
-  // Function to clear all messages
+  }, [handleSubmit]);  // Function to clear all messages
   const clearMessages = useCallback(() => {
     setMessages([]);
   }, [setMessages]);
+    // Track model information for UI display
   // Handle feedback submission
   const handleSubmitFeedback = useCallback(async (
     messageId: string, 
@@ -169,6 +169,8 @@ export default function Home() {
                 submittedFeedback={submittedFeedback}
                 onFeedbackSubmitted={handleFeedbackSubmitted}
                 messageActionsAlwaysVisible={messageActionsAlwaysVisible}
+                modelId={selectedModel}
+                modelProvider={provider}
               />
             </div>
           </motion.div>

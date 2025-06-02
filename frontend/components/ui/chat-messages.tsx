@@ -34,6 +34,8 @@ interface ChatMessagesProps {
   submittedFeedback?: Record<string, "thumbs-up" | "thumbs-down">
   onFeedbackSubmitted?: (messageId: string, feedback: "thumbs-up" | "thumbs-down") => void
   messageActionsAlwaysVisible?: boolean
+  modelId?: string // Added
+  modelProvider?: 'openrouter' | 'google' // Added
 }
 
 export function ChatMessages({
@@ -50,6 +52,8 @@ export function ChatMessages({
   submittedFeedback = {},
   onFeedbackSubmitted,
   messageActionsAlwaysVisible = false,
+  modelId, // Added
+  modelProvider, // Added
 }: ChatMessagesProps) {
   const [feedbackDialog, setFeedbackDialog] = useState<{
     isOpen: boolean
@@ -315,6 +319,8 @@ export function ChatMessages({
             setMode={setMode}
             append={append}
             messageActionsAlwaysVisible={messageActionsAlwaysVisible}
+            modelId={modelId} // Added
+            modelProvider={modelProvider} // Added
           />
         </div>
 

@@ -339,6 +339,8 @@ export function Chat({
             mode={mode}
             setMode={setMode}
             append={append}
+            modelId={selectedModel}
+            modelProvider={provider}
           />
         </ChatMessages>
       ) : null}

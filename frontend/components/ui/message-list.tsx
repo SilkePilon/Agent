@@ -19,6 +19,8 @@ interface MessageListProps {
   setMode?: (mode: 'agent' | 'chat') => void
   append?: (message: { role: "user"; content: string }) => void
   messageActionsAlwaysVisible?: boolean
+  modelId?: string
+  modelProvider?: 'openrouter' | 'google'
 }
 
 export function MessageList({
@@ -30,6 +32,8 @@ export function MessageList({
   setMode,
   append,
   messageActionsAlwaysVisible = false,
+  modelId,
+  modelProvider,
 }: MessageListProps) {
   return (
     <div className="space-y-4 overflow-hidden w-full max-w-full message-list-container">
@@ -111,7 +115,7 @@ export function MessageList({
               }
             }}
           >
-            <TypingIndicator mode={mode} />
+            <TypingIndicator mode={mode} modelId={modelId} modelProvider={modelProvider} />
           </motion.div>
         )}
       </AnimatePresence>
