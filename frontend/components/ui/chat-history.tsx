@@ -402,51 +402,56 @@ export function ChatHistory({
                           ) : (
                             <>
                               <div className="flex items-start justify-between mb-2">
-                                <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2">
+                                <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2 flex items-center gap-2">
                                   {session.title}
-                                </h4>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <MoreVertical className="size-3" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-40">
-                                    <DropdownMenuItem
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        handleStartEdit(session)
-                                      }}
-                                    >
-                                      <Edit2 className="size-3 mr-2" />
-                                      Rename
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        handleDeleteSession(session.id)
-                                      }}
-                                      className="text-destructive"
-                                    >
-                                      <Trash2 className="size-3 mr-2" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        handleRegenerateTitle(session.id)
-                                      }}
-                                    >
-                                      <RefreshCw className="size-3 mr-2" />
-                                      Regenerate Title
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                  {regeneratingTitleId === session.id && (
+                                    <RefreshCw className="size-3 animate-spin text-muted-foreground" />
+                                  )}
+                                </h4>                                {/* Inline action buttons for mobile */}
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 group border-2 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleStartEdit(session)
+                                    }}
+                                    aria-label="Rename"
+                                  >
+                                    <Edit2 className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 group border-2 hover:bg-green-50 hover:border-green-200 hover:text-green-600"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleRegenerateTitle(session.id)
+                                    }}
+                                    disabled={regeneratingTitleId === session.id}
+                                    aria-label="Regenerate Title"
+                                  >
+                                    <RefreshCw className={cn(
+                                      "h-4 w-4 transition-transform duration-200",
+                                      regeneratingTitleId === session.id 
+                                        ? "animate-spin" 
+                                        : "group-hover:scale-110 group-hover:rotate-180"
+                                    )} />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 group border-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleDeleteSession(session.id)
+                                    }}
+                                    aria-label="Delete"
+                                  >
+                                    <Trash2 className="h-4 w-4 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-12" />
+                                  </Button>
+                                </div>
                               </div>
                               
                               <div className="flex items-center justify-between text-xs text-muted-foreground">
