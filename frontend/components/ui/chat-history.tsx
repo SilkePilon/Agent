@@ -22,7 +22,8 @@ import {
   Image,
   File,
   FileCode,
-  FileArchive
+  FileArchive,
+  Settings
 } from "lucide-react"
 import { Gemini, OpenRouter } from '@lobehub/icons'
 
@@ -455,6 +456,7 @@ export function ChatHistory({
                           <div className="flex items-center gap-1 shrink-0">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
+                                <div className="flex items-center gap-1.5 text-xs px-2 py-0.5 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -464,8 +466,9 @@ export function ChatHistory({
                                   )}
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <MoreVertical className="size-3" />
+                                  <Settings className="size-3" />
                                 </Button>
+                                </div>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-40">
                                 <DropdownMenuItem
