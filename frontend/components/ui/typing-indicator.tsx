@@ -40,7 +40,7 @@ export function TypingIndicator({ mode = 'chat' }: TypingIndicatorProps) {
       
         {/* Chat Bubble with Typing Animation */}
         <motion.div 
-          className="group relative rounded-2xl bg-muted px-4 py-3 shadow-sm border"
+          className="group relative rounded-2xl bg-muted px-4 py-3 border"
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ 
