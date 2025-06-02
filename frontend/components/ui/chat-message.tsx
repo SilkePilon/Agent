@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/collapsible"
 import { FilePreview } from "@/components/ui/file-preview"
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer"
+import { AnimatedMarkdown } from 'flowtoken';
+import 'flowtoken/dist/styles.css';
+import githubLight from 'shiki/themes/github-light.mjs';
 
 const chatBubbleVariants = cva(
   "group/message relative break-words rounded-lg p-3 text-sm max-w-[min(70%,theme(maxWidth.2xl))] w-fit",
@@ -230,7 +233,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             key={`text-${index}`}
           >
             <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
-              <MarkdownRenderer>{part.text}</MarkdownRenderer>
+              {!isUser && role === 'assistant' ? (
+                <div className="prose dark:prose-invert lg:prose-md prose-pre:p-0 prose-pre:m-0 prose-pre:bg-transparent">
+                  <AnimatedMarkdown
+                    content={part.text}
+                    animation="typewriter"
+                    sep="char"
+                    animationDuration="0.05s"
+                    animationTimingFunction="linear"
+                    codeStyle={githubLight}
+                  />
+                </div>
+              ) : (
+                <MarkdownRenderer>{part.text}</MarkdownRenderer>
+              )}
               
               {/* Show model badge inside the bubble for assistant messages */}
               {!isUser && index === lastTextPartIndex && role === "assistant" && (
@@ -291,7 +307,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   return (
     <div className={cn("flex flex-col w-full max-w-full overflow-x-hidden", isUser ? "items-end" : "items-start")}>
       <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
-        <MarkdownRenderer>{content}</MarkdownRenderer>
+        {!isUser && role === 'assistant' ? (
+          <div className="prose dark:prose-invert lg:prose-md prose-pre:p-0 prose-pre:m-0 prose-pre:bg-transparent">
+            <AnimatedMarkdown
+              content={content}
+              animation="typewriter"
+              sep="char"
+              animationDuration="0.05s"
+              animationTimingFunction="linear"
+              codeStyle={githubLight}
+            />
+          </div>
+        ) : (
+          <MarkdownRenderer>{content}</MarkdownRenderer>
+        )}
         
         {/* Show model badge inside the bubble for assistant messages */}
         {!isUser && role === "assistant" && (
