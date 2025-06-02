@@ -15,6 +15,7 @@ import {
   User,
   RefreshCw
 } from "lucide-react"
+import { Gemini, OpenRouter } from '@lobehub/icons'
 
 import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -156,6 +157,20 @@ export function ChatHistory({
     }).format(date)
   }
 
+  // Helper function to render provider icon
+  const renderProviderIcon = (provider?: 'openrouter' | 'google') => {
+    if (!provider) return null
+    
+    switch (provider) {
+      case 'google':
+        return <Gemini className="h-3.5 w-3.5 text-purple-600 shrink-0" />
+      case 'openrouter':
+        return <OpenRouter className="h-3.5 w-3.5 text-[#6467f2] shrink-0" />
+      default:
+        return null
+    }
+  }
+
   // Shared content component for both Sheet and Drawer
   const ChatHistoryContent = () => (
     <>
@@ -189,7 +204,7 @@ export function ChatHistory({
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     className={cn(
-                      "group relative rounded-lg border p-3 cursor-pointer transition-all duration-200",
+                      "group relative rounded-lg border-2 p-3 cursor-pointer transition-all duration-200",
                       "hover:bg-accent/50 hover:border-accent-foreground/20",
                       currentSessionId === session.id && "bg-accent border-accent-foreground/30"
                     )}
@@ -227,9 +242,9 @@ export function ChatHistory({
                         </div>
                       </div>
                     ) : (
-                      <>
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2">
+                      <>                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2 flex items-center gap-2">
+                            {renderProviderIcon(session.modelProvider)}
                             {session.title}
                           </h4>
                           <DropdownMenu>
@@ -358,11 +373,10 @@ export function ChatHistory({
                       {groupName}
                     </h3>
                     <div className="space-y-1">
-                      {groupSessions.map((session) => (
-                        <div
+                      {groupSessions.map((session) => (                        <div
                           key={session.id}
                           className={cn(
-                            "group relative rounded-lg border p-3 cursor-pointer transition-all duration-200",
+                            "group relative rounded-lg border-2 p-3 cursor-pointer transition-all duration-200",
                             "hover:bg-accent/50 hover:border-accent-foreground/20",
                             currentSessionId === session.id && "bg-accent border-accent-foreground/30"
                           )}
@@ -400,15 +414,14 @@ export function ChatHistory({
                               </div>
                             </div>
                           ) : (
-                            <>
-                              <div className="flex items-start justify-between mb-2">
-                                <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2 flex items-center gap-2">
+                            <>                              <div className="flex items-start justify-between mb-2">                                <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2 flex items-center gap-2">
                                   {session.title}
                                   {regeneratingTitleId === session.id && (
                                     <RefreshCw className="size-3 animate-spin text-muted-foreground" />
                                   )}
                                 </h4>                                {/* Inline action buttons for mobile */}
                                 <div className="flex items-center gap-1 shrink-0">
+                                  {renderProviderIcon(session.modelProvider)}
                                   <Button
                                     variant="outline"
                                     size="icon"
@@ -527,8 +540,7 @@ export function ChatHistory({
               <Plus className="size-4 mr-1" />
               New
             </Button>
-          </div>
-        </SheetHeader>
+          </div>        </SheetHeader>
         
         <ScrollArea className="flex-1 px-4">
           <div className="py-4 space-y-6">
@@ -544,7 +556,7 @@ export function ChatHistory({
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       className={cn(
-                        "group relative rounded-lg border p-3 cursor-pointer transition-all duration-200",
+                        "group relative rounded-lg border-2 p-3 cursor-pointer transition-all duration-200",
                         "hover:bg-accent/50 hover:border-accent-foreground/20",
                         currentSessionId === session.id && "bg-accent border-accent-foreground/30"
                       )}
@@ -584,7 +596,8 @@ export function ChatHistory({
                       ) : (
                         <>
                           <div className="flex items-start justify-between mb-2">
-                            <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2">
+                            <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2 flex items-center gap-2">
+                              {renderProviderIcon(session.modelProvider)}
                               {session.title}
                             </h4>
                             <DropdownMenu>
