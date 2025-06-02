@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Bot, MessageCircle } from "lucide-react"
 
@@ -62,6 +62,23 @@ export function ChatInput({
   setMessageActionsAlwaysVisible,
 }: ChatInputProps) {
   const [files, setFiles] = useState<File[] | null>(null)
+  const [inputHeight, setInputHeight] = useState<number>(56) // Default height for single line
+  const formRef = useRef<HTMLFormElement>(null)
+  
+  // Track the height of the input form for animations
+  useEffect(() => {
+    if (formRef.current) {
+      const resizeObserver = new ResizeObserver(entries => {
+        for (const entry of entries) {
+          setInputHeight(entry.target.scrollHeight)
+        }
+      })
+      
+      resizeObserver.observe(formRef.current)
+      return () => resizeObserver.disconnect()
+    }
+  }, [])
+  
   const onSubmit = (event: React.FormEvent) => {
     if (!files) {
       handleSubmit(event)
@@ -70,8 +87,8 @@ export function ChatInput({
     handleSubmit(event, { experimental_attachments: fileList })
     setFiles(null)
   }
-  
-  return (    <motion.div
+    return (
+    <motion.div
       className="flex flex-col w-full fixed left-1/2"
       initial={false}
       animate={{
@@ -79,7 +96,7 @@ export function ChatInput({
         bottom: hasMessages ? "16px" : "auto",
         transform: hasMessages ? "translateX(-50%)" : "translate(-50%, -50%)",
         zIndex: hasMessages ? 50 : 10,
-        width: "calc(100% - 32px)", // Changed this line
+        width: "calc(100% - 32px)",
         maxWidth: hasMessages ? "768px" : "512px",
       }}
       transition={{ 
@@ -87,7 +104,8 @@ export function ChatInput({
         stiffness: 300, 
         damping: 35,
         mass: 0.8
-      }}>      {/* Agent/Chat Mode Indicator - Positioned at top center of entire card */}
+      }}
+    >{/* Agent/Chat Mode Indicator - Positioned at top center of entire card */}
       <AnimatePresence>        {isFocused && mode === 'agent' && (
           <motion.div 
             className="absolute left-1/2 transform -translate-x-1/2 -top-10 z-0 flex items-center gap-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-md shadow-sm pointer-events-none"
@@ -145,7 +163,7 @@ export function ChatInput({
             <span className="font-medium">Chat Mode Active</span>
           </motion.div>
         )}
-      </AnimatePresence>      <form onSubmit={onSubmit} className="relative z-10">        <MessageInput
+      </AnimatePresence>      <form onSubmit={onSubmit} className="relative z-10 transition-all duration-300 ease-out" ref={formRef}>        <MessageInput
           value={input}
           onChange={handleInputChange}
           allowAttachments

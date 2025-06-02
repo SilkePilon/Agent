@@ -313,11 +313,12 @@ export function SettingsTooltip({
         } 
         return 'Default'
     }
-
+    
     return (
-        <Tooltip open={isOpen} onOpenChange={handleTooltipOpenChange}>
-            <TooltipTrigger asChild onClick={() => setIsOpen(!isOpen)}>
-                {children}
+        <TooltipProvider>
+            <Tooltip open={isOpen} onOpenChange={handleTooltipOpenChange}>
+                <TooltipTrigger asChild onClick={() => setIsOpen(!isOpen)}>
+                    {children}
             </TooltipTrigger>
             <TooltipContent
                 side="top"
@@ -334,10 +335,10 @@ export function SettingsTooltip({
                     setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}
                     getCurrentProvider={getCurrentProvider}
                     getCurrentModel={getCurrentModel}
-                    setParentTooltipOpen={setIsOpen} // Pass setIsOpen to allow child to control parent
-                    onModelSelectorOpenChange={setIsModelSelectorOpen} // Pass model selector state callback
+                    setParentTooltipOpen={setIsOpen} // Pass setIsOpen to allow child to control parent                    onModelSelectorOpenChange={setIsModelSelectorOpen} // Pass model selector state callback
                 />
             </TooltipContent>
         </Tooltip>
+        </TooltipProvider>
     )
 }

@@ -25,6 +25,8 @@ export function useAutosizeTextArea({
       originalHeight.current = currentRef.scrollHeight - borderAdjustment
     }
 
+    // Add smooth transition for height changes
+    currentRef.style.transition = "height 0.15s ease-out"
     currentRef.style.removeProperty("height")
     const scrollHeight = currentRef.scrollHeight
 

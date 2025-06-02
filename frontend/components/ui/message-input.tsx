@@ -297,17 +297,29 @@ export function MessageInput({
       setTextAreaHeight(textAreaRef.current.offsetHeight)
     }
   }, [props.value])
+  // Calculate the right padding based on visible buttons
+  const calculateButtonWidth = () => {
+    let buttonCount = 1 // Always have send button
+    if (props.hasMessages && props.clearMessages) buttonCount++ // Delete button
+    if (props.mode && props.setMode) buttonCount++ // Settings button
+    if (props.allowAttachments) buttonCount++ // Attach button
+    if (isSpeechSupported) buttonCount++ // Mic button
+    
+    // Each button is 32px wide + 8px gap, plus 12px padding from edge
+    return (buttonCount * 32) + ((buttonCount - 1) * 8) + 12
+  }
+
+  const buttonAreaWidth = calculateButtonWidth()
 
   const showFileList =
     props.allowAttachments && props.files && props.files.length > 0
-
   useAutosizeTextArea({
     ref: textAreaRef,
-    maxHeight: 240,
+    maxHeight: 200, // Reduced from 240 to provide better UX with smaller max height
     borderWidth: 1,
     dependencies: [props.value, showFileList],
   })
-
+  
   return (
     <div
       className="relative flex w-full"
@@ -325,9 +337,7 @@ export function MessageInput({
       <RecordingPrompt
         isVisible={isRecording}
         onStopRecording={stopRecording}
-      />
-
-      <div className="relative flex w-full items-center space-x-2">
+      />      <div className="relative flex w-full items-center space-x-2">
         
         <div className="relative flex-1">
           <textarea
@@ -337,15 +347,17 @@ export function MessageInput({
             onPaste={onPaste}
             onKeyDown={onKeyDown}
             onFocus={props.onFocus}
-            onBlur={props.onBlur}
-            className={cn(
-              "relative z-10 w-full grow resize-none rounded-xl border-2 border-input bg-background p-3 pr-24 text-sm ring-offset-background transition-[border] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+            onBlur={props.onBlur}            className={cn(
+              "relative z-10 w-full grow resize-none rounded-xl border-2 border-input bg-background p-3 text-sm ring-offset-background transition-[border,height] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
               props.mode === 'agent' 
                 ? "focus-visible:border-blue-500" 
                 : "focus-visible:border-primary",
               showFileList && "pb-16",
               className
             )}
+            style={{
+              paddingRight: `${buttonAreaWidth}px`
+            }}
             {...(props.allowAttachments
               ? omit(props, [
                   "allowAttachments", 
@@ -408,15 +420,11 @@ export function MessageInput({
                         }}
                       />
                     )
-                  })}
-                </AnimatePresence>
+                  })}                </AnimatePresence>
               </div>
-            </div>
-          )}
+            </div>          )}
         </div>
-      </div>
-
-      <div className="absolute right-3 top-3 z-20 flex gap-2">
+      </div>      <div className="absolute right-3 top-3 z-20 flex gap-2">
         {/* Delete Conversation Button */}
         <AnimatePresence>
           {props.hasMessages && props.clearMessages && (
@@ -442,12 +450,11 @@ export function MessageInput({
                   damping: 30 
                 }
               }}
-            >
-              <Button
+            >              <Button
                 type="button"
                 size="icon"
                 variant="outline"
-                className="h-8 w-8 group hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                className="h-8 w-8 group hover:bg-red-50 hover:border-red-200 hover:text-red-600 border-2"
                 aria-label="Delete conversation"
                 onClick={() => {
                   if (props.clearMessages) {
@@ -464,13 +471,12 @@ export function MessageInput({
         {/* Settings Tooltip / Drawer */}
         {props.mode && props.setMode && (
           isMobile ? (
-            <Drawer>
-              <DrawerTrigger asChild>
+            <Drawer>              <DrawerTrigger asChild>
                 <Button
                   type="button"
                   size="icon"
                   variant="outline"
-                  className="h-8 w-8 group"
+                  className="h-8 w-8 group border-2"
                   aria-label="Settings"
                 >
                   <Settings className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90 group-hover:scale-110" />
@@ -501,10 +507,9 @@ export function MessageInput({
                     setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}
                     // setParentTooltipOpen is not applicable for Drawer
                   />
-                </div>
-                <DrawerFooter className="pt-2">
+                </div>                <DrawerFooter className="pt-2">
                   <DrawerClose asChild>
-                    <Button variant="outline">Close</Button>
+                    <Button variant="outline" className="border-2">Close</Button>
                   </DrawerClose>
                 </DrawerFooter>
               </DrawerContent>
@@ -525,13 +530,12 @@ export function MessageInput({
               getCurrentProvider={getCurrentProvider}
               getCurrentModel={getCurrentModel}
               messageActionsAlwaysVisible={messageActionsAlwaysVisible}
-              setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}
-            >
+              setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}            >
               <Button
                 type="button"
                 size="icon"
                 variant="outline"
-                className="h-8 w-8 group"
+                className="h-8 w-8 group border-2"
                 aria-label="Settings"
               >
                 <Settings className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90 group-hover:scale-110" />
@@ -539,13 +543,12 @@ export function MessageInput({
             </SettingsTooltip>
           )
         )}
-        
-        {props.allowAttachments && (
+          {props.allowAttachments && (
           <Button
             type="button"
             size="icon"
             variant="outline"
-            className="h-8 w-8 group"
+            className="h-8 w-8 group border-2"
             aria-label="Attach a file"
             onClick={async () => {
               const files = await showFileUploadDialog()
@@ -554,12 +557,11 @@ export function MessageInput({
           >
             <Paperclip className="h-4 w-4 transition-transform duration-200 group-hover:rotate-12 group-hover:scale-110" />
           </Button>
-        )}
-        {isSpeechSupported && (
+        )}        {isSpeechSupported && (
           <Button
             type="button"
             variant="outline"
-            className={cn("h-8 w-8 group", isListening && "text-primary")}
+            className={cn("h-8 w-8 group border-2", isListening && "text-primary")}
             aria-label="Voice input"
             size="icon"
             onClick={toggleListening}
@@ -589,9 +591,7 @@ export function MessageInput({
               props.mode === 'agent' ? "bg-blue-500 hover:bg-blue-600 text-white" : "bg-green-500 hover:bg-green-600 text-white"
             )}
             aria-label="Send message"
-            disabled={props.value === "" || isGenerating}
-          >
-            <ArrowUp className="h-5 w-5 transition-transform duration-200 group-hover:scale-110 group-hover:-translate-y-0.5" />
+            disabled={props.value === "" || isGenerating}          >            <ArrowUp className="h-5 w-5 transition-transform duration-200 group-hover:scale-110 group-hover:-translate-y-0.5" />
           </Button>
         )}
       </div>
@@ -599,10 +599,8 @@ export function MessageInput({
       {props.allowAttachments && <FileUploadOverlay isDragging={isDragging} />}
 
       <RecordingControls
-        isRecording={isRecording}
-        isTranscribing={isTranscribing}
-        audioStream={audioStream}
-        textAreaHeight={textAreaHeight}
+        isRecording={isRecording}        isTranscribing={isTranscribing}
+        audioStream={audioStream}        textAreaHeight={textAreaHeight}
         onStopRecording={stopRecording}
       />
     </div>
