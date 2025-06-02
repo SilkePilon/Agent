@@ -15,7 +15,14 @@ import {
   User,
   RefreshCw,
   Search,
-  Filter
+  Filter, ChevronDown,
+  ChevronUp,
+  FileText,
+  Download,
+  Image,
+  File,
+  FileCode,
+  FileArchive
 } from "lucide-react"
 import { Gemini, OpenRouter } from '@lobehub/icons'
 
@@ -51,8 +58,16 @@ import {
   deleteChatSession,
   updateSessionTitle,
   regenerateSessionTitle,
-  type ChatSession
+  type ChatSession,
+  type ExtendedMessage
 } from "@/lib/chat-history"
+
+// Attachment interface to match the one used in messages
+interface Attachment {
+  name?: string
+  contentType?: string
+  url: string
+}
 
 interface ChatHistoryProps {
   onLoadSession: (session: ChatSession) => void
@@ -74,6 +89,7 @@ export function ChatHistory({
   const [regeneratingTitleId, setRegeneratingTitleId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterMode, setFilterMode] = useState<'all' | 'chat' | 'agent'>('all')
+  const [openFilePanels, setOpenFilePanels] = useState<Record<string, boolean>>({});
   const isMobile = useIsMobile()
 
   const refreshSessions = useCallback(() => {
@@ -120,11 +136,123 @@ export function ChatHistory({
     onLoadSession(session)
     setIsOpen(false)
   }, [onLoadSession])
-
   const handleNewChat = useCallback(() => {
     onNewChat()
     setIsOpen(false)
   }, [onNewChat])
+
+  const toggleFilePanel = useCallback((sessionId: string) => {
+    setOpenFilePanels(prev => ({
+      ...prev,
+      [sessionId]: !prev[sessionId]
+    }));
+  }, []);
+  // Get appropriate file icon based on file type
+  const getFileIcon = (contentType: string, fileName: string) => {
+    // For real attachments, use contentType
+    if (contentType && contentType !== 'unknown') {
+      if (contentType.startsWith('image/')) {
+        return <Image className="size-3 shrink-0 text-blue-500" />
+      }
+      if (contentType.includes('pdf')) {
+        return <FileText className="size-3 shrink-0 text-red-500" />
+      }
+      if (contentType.includes('text/') || contentType.includes('json') || contentType.includes('javascript') || contentType.includes('typescript')) {
+        return <FileCode className="size-3 shrink-0 text-green-500" />
+      }
+      if (contentType.includes('zip') || contentType.includes('rar') || contentType.includes('tar') || contentType.includes('gzip')) {
+        return <FileArchive className="size-3 shrink-0 text-purple-500" />
+      }
+    }
+
+    // Fallback to file extension
+    const extension = fileName.split('.').pop()?.toLowerCase()
+    if (extension) {
+      if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(extension)) {
+        return <Image className="size-3 shrink-0 text-blue-500" />
+      }
+      if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'md'].includes(extension)) {
+        return <FileText className="size-3 shrink-0 text-red-500" />
+      }
+      if (['js', 'ts', 'jsx', 'tsx', 'json', 'html', 'css', 'scss', 'sass', 'less', 'py', 'java', 'cpp', 'c', 'go', 'rs', 'php', 'rb', 'swift', 'kt'].includes(extension)) {
+        return <FileCode className="size-3 shrink-0 text-green-500" />
+      }
+      if (['zip', 'rar', 'tar', 'gz', '7z', 'bz2', 'xz'].includes(extension)) {
+        return <FileArchive className="size-3 shrink-0 text-purple-500" />
+      }
+    }
+
+    // Default file icon
+    return <File className="size-3 shrink-0 text-gray-500" />
+  }
+
+  // Handle file download
+  const handleFileDownload = useCallback((file: { name: string; url: string | null; type: string }) => {
+    if (file.url) {
+      // Handle real file attachments (data URLs)
+      try {
+        const link = document.createElement('a');
+        link.href = file.url;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (error) {
+        console.error('Failed to download file:', error);
+        alert('Failed to download file. The file may no longer be available.');
+      }
+    } else {
+      // Fallback for text-based file references (no actual file)
+      alert(`File "${file.name}" was mentioned in the chat but no actual file attachment is available for download.`);
+    }
+  }, []);
+  // Extract actual file attachments from message
+  const extractFileReferences = (message: ExtendedMessage) => {
+    // Check for real file attachments first
+    if (message.experimental_attachments && message.experimental_attachments.length > 0) {
+      return message.experimental_attachments.map((attachment, index) => ({
+        name: attachment.name || `Attachment ${index + 1}`,
+        type: attachment.contentType || 'unknown',
+        url: attachment.url,
+        id: `attachment-${message.id}-${index}`
+      }));
+    }
+
+    // Fallback: Simple heuristic to extract potential file references from message content
+    const fileRegex = /(uploaded|attached|sent) (\w+\.\w+)/gi;
+    const content = typeof message.content === 'string' ? message.content : '';
+
+    const matches = [...content.matchAll(fileRegex)];
+    const files = matches.map(match => ({
+      name: match[2],
+      type: match[2].split('.').pop()?.toLowerCase() || 'unknown',
+      url: null, // No actual file URL for text-based matches
+      id: `file-${Math.random().toString(36).substring(2, 11)}`
+    }));
+
+    return files;
+  }
+  // Check if a session has any file attachments
+  const sessionHasFiles = (session: ChatSession) => {
+    return session.messages.some(msg => {
+      const files = extractFileReferences(msg);
+      return files.length > 0;
+    });
+  }
+
+  // Get file count and type for a session
+  const getSessionFileInfo = (session: ChatSession) => {
+    let totalFiles = 0;
+    let downloadableFiles = 0;
+
+    session.messages.forEach(msg => {
+      const files = extractFileReferences(msg);
+      totalFiles += files.length;
+      downloadableFiles += files.filter(f => f.url).length;
+    });
+
+    return { totalFiles, downloadableFiles };
+  }
 
   // Filter sessions based on search and filter criteria
   const filteredSessions = sessions.filter(session => {
@@ -268,58 +396,58 @@ export function ChatHistory({
                   {groupName}
                 </h3>
                 <div className="space-y-1">
-                  {groupSessions.map((session) => (                    <motion.div
-                      key={session.id}
-                      initial={{ 
-                        opacity: 0, 
-                        ...(isMobile 
-                          ? { y: 20 } 
-                          : { x: -20 })
-                      }}
-                      animate={{ 
-                        opacity: 1, 
-                        ...(isMobile 
-                          ? { y: 0 } 
-                          : { x: 0 })
-                      }}
-                      className={cn(
-                        "group relative rounded-lg border-2 p-3 cursor-pointer transition-all duration-200",
-                        "hover:bg-accent/50 hover:border-accent-foreground/20",
-                        currentSessionId === session.id && "bg-accent border-accent-foreground/30"
-                      )}
-                      onClick={() => handleLoadSession(session)}
-                    >
-                      {editingSessionId === session.id ? (
-                        <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                          <Input
-                            value={editTitle}
-                            onChange={(e) => setEditTitle(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSaveEdit()
-                              if (e.key === 'Escape') handleCancelEdit()
-                            }}
-                            className="h-7 text-sm"
-                            autoFocus
-                          />
-                          <div className="flex items-center gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={handleSaveEdit}
-                              className="h-6 w-6 p-0"
-                            >
-                              <Check className="size-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={handleCancelEdit}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="size-3" />                          </Button>
-                          </div>
-                        </div>) : (
-                        <>
+                  {groupSessions.map((session) => (<motion.div
+                    key={session.id}
+                    initial={{
+                      opacity: 0,
+                      ...(isMobile
+                        ? { y: 20 }
+                        : { x: -20 })
+                    }}
+                    animate={{
+                      opacity: 1,
+                      ...(isMobile
+                        ? { y: 0 }
+                        : { x: 0 })
+                    }}
+                    className={cn(
+                      "group relative rounded-lg border-2 p-3 cursor-pointer transition-all duration-200",
+                      "hover:bg-accent/50 hover:border-accent-foreground/20",
+                      currentSessionId === session.id && "bg-accent border-accent-foreground/30"
+                    )}
+                    onClick={() => handleLoadSession(session)}
+                  >
+                    {editingSessionId === session.id ? (
+                      <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                        <Input
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveEdit()
+                            if (e.key === 'Escape') handleCancelEdit()
+                          }}
+                          className="h-7 text-sm"
+                          autoFocus
+                        />
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleSaveEdit}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Check className="size-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleCancelEdit}
+                            className="h-6 w-6 p-0"
+                          >
+                            <X className="size-3" />                          </Button>
+                        </div>
+                      </div>) : (
+                      <>
                         <div className="flex items-start justify-between mb-0">
                           <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2">
                             {session.title}
@@ -372,37 +500,95 @@ export function ChatHistory({
                             </DropdownMenu>
                           </div>
                         </div>                          <div className="space-y-0.5">
-                            <div className="flex items-center flex-wrap gap-1.5">
-                              <div className="flex items-center gap-1.5 text-xs px-2 py-0.5 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
-                                {session.mode === 'agent' ? (
-                                  <><Bot className="size-2.5 mr-1" />Agent</>
-                                ) : (
-                                  <><MessageSquare className="size-2.5 mr-1" />Chat</>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1.5 text-xs px-2 py-1 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
-                                {renderProviderIcon(session.modelProvider)}
-                                {session.modelId && (
-                                  <span className="text-xs opacity-70">
-                                    {session.modelId.split('-')[0].charAt(0).toUpperCase() + session.modelId.split('-')[0].slice(1)}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1.5 text-xs px-2 py-1 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
-                                {session.modelId && (
-                                  <span className="text-xs opacity-70">
-                                    {session.messages.length} message{session.messages.length !== 1 ? 's' : ''}
-                                  </span>
-                                )}
-                              </div>
+                          <div className="flex items-center flex-wrap gap-1.5">
+                            <div className="flex items-center gap-1.5 text-xs px-2 py-0.5 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
+                              {session.mode === 'agent' ? (
+                                <><Bot className="size-2.5 mr-1" />Agent</>
+                              ) : (
+                                <><MessageSquare className="size-2.5 mr-1" />Chat</>
+                              )}
                             </div>
-                            <div className="text-xs text-muted-foreground/70">
-                              {formatTime(new Date(session.updatedAt))}
+                            <div className="flex items-center gap-1.5 text-xs px-2 py-1 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
+                              {renderProviderIcon(session.modelProvider)}
+                              {session.modelId && (
+                                <span className="text-xs opacity-70">
+                                  {session.modelId.split('-')[0].charAt(0).toUpperCase() + session.modelId.split('-')[0].slice(1)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs px-2 py-1 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
+                              {session.modelId && (
+                                <span className="text-xs opacity-70">
+                                  {session.messages.length} message{session.messages.length !== 1 ? 's' : ''}
+                                </span>
+                              )}
                             </div>
                           </div>
-                        </>
-                      )}
-                    </motion.div>
+                          <br></br>
+                          <div className="text-xs text-muted-foreground/70">
+                            <div className="flex justify-between items-center">
+                              <span>{formatTime(new Date(session.updatedAt))}</span>
+                              {sessionHasFiles(session) && (
+                                <button
+                                  className="text-xs text-muted-foreground/70 hover:text-foreground flex items-center gap-1 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleFilePanel(session.id);
+                                  }}
+                                >
+                                  <FileText className="size-3" />
+                                  <span>
+                                    {(() => {
+                                      const { totalFiles, downloadableFiles } = getSessionFileInfo(session);
+                                      if (downloadableFiles > 0) {
+                                        return `${downloadableFiles} attachment${downloadableFiles > 1 ? 's' : ''}${totalFiles > downloadableFiles ? ` (+${totalFiles - downloadableFiles} ref${totalFiles - downloadableFiles > 1 ? 's' : ''})` : ''}`;
+                                      } else {
+                                        return `${totalFiles} file ref${totalFiles > 1 ? 's' : ''}`;
+                                      }
+                                    })()}
+                                  </span>
+                                  {openFilePanels[session.id] ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+                                </button>
+                              )}
+                            </div>
+                            
+
+                            {sessionHasFiles(session) && openFilePanels[session.id] && (
+                              <div className="mt-2 space-y-1 max-h-24 overflow-y-auto">
+                                {session.messages.map(msg => {
+                                  const files = extractFileReferences(msg);
+                                  return files.map(file => (<div key={file.id} className="flex items-center justify-between py-1 px-2 bg-muted/30 rounded text-xs">
+                                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                      {getFileIcon(file.type, file.name)}
+                                      <span className="truncate" title={file.name}>{file.name}</span>
+                                      {file.url && (
+                                        <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                                          Downloadable
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 w-6 p-0 shrink-0 flex items-center justify-center bg-muted/50 dark:bg-muted/30 border border-border rounded-sm"
+                                      title="Download file"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleFileDownload(file);
+                                      }}
+                                    >
+                                      <Download className="size-3" />
+                                    </Button>
+                                  </div>
+                                  ));
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
                   ))}
                 </div>
               </div>))}
@@ -442,7 +628,10 @@ export function ChatHistory({
     renderProviderIcon,
     formatTime,
     setFilterMode,
-    setSearchQuery
+    setSearchQuery, openFilePanels,
+    toggleFilePanel,
+    sessionHasFiles,
+    extractFileReferences
   ])
   if (isMobile) {
     return (

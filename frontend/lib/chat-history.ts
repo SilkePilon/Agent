@@ -1,10 +1,18 @@
 import { type Message } from "ai"
 
+// Attachment interface to match the one used in messages
+interface Attachment {
+  name?: string
+  contentType?: string
+  url: string
+}
+
 // Extended message type with additional fields for our UI
 export interface ExtendedMessage extends Message {
   createdAt?: Date
   modelId?: string
   modelProvider?: 'openrouter' | 'google'
+  experimental_attachments?: Attachment[]
 }
 
 export interface ChatSession {
