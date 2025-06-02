@@ -310,7 +310,8 @@ export function ChatHistory({
                               <X className="size-3" />                          </Button>
                           </div>
                         </div>) : (
-                        <>                        <div className="flex items-start justify-between mb-2">
+                        <>
+                        <div className="flex items-start justify-between mb-0">
                           <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2">
                             {session.title}
                           </h4>
@@ -320,7 +321,10 @@ export function ChatHistory({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  className={cn(
+                                    "h-6 w-6 p-0 transition-opacity",
+                                    isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                  )}
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <MoreVertical className="size-3" />
@@ -358,18 +362,16 @@ export function ChatHistory({
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
-                        </div>
-
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1.5 text-xs mt-2 px-2 py-1 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
+                        </div>                          <div className="space-y-0.5">
+                            <div className="flex items-center flex-wrap gap-1.5">
+                              <div className="flex items-center gap-1.5 text-xs px-2 py-0.5 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
                                 {session.mode === 'agent' ? (
                                   <><Bot className="size-2.5 mr-1" />Agent</>
                                 ) : (
                                   <><MessageSquare className="size-2.5 mr-1" />Chat</>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1.5 text-xs mt-2 px-2 py-1 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
+                              <div className="flex items-center gap-1.5 text-xs px-2 py-1 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
                                 {renderProviderIcon(session.modelProvider)}
                                 {session.modelId && (
                                   <span className="text-xs opacity-70">
@@ -377,7 +379,7 @@ export function ChatHistory({
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1.5 text-xs mt-2 px-2 py-1 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
+                              <div className="flex items-center gap-1.5 text-xs px-2 py-1 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
                                 {session.modelId && (
                                   <span className="text-xs opacity-70">
                                     {session.messages.length} message{session.messages.length !== 1 ? 's' : ''}
@@ -385,8 +387,10 @@ export function ChatHistory({
                                 )}
                               </div>
                             </div>
+                            <div className="text-xs text-muted-foreground/70">
+                              {formatTime(new Date(session.updatedAt))}
+                            </div>
                           </div>
-                          <span>{formatTime(new Date(session.updatedAt))}</span>
                         </>
                       )}
                     </motion.div>
