@@ -237,17 +237,15 @@ export function ChatHistory({
                             onClick={handleCancelEdit}
                             className="h-6 w-6 p-0"
                           >
-                            <X className="size-3" />
-                          </Button>
+                            <X className="size-3" />                          </Button>
                         </div>
-                      </div>
-                    ) : (
+                      </div>                    ) : (
                       <>                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2 flex items-center gap-2">
-                            {renderProviderIcon(session.modelProvider)}
+                          <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2">
                             {session.title}
                           </h4>
-                          <DropdownMenu>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
                                 variant="ghost"
@@ -289,6 +287,7 @@ export function ChatHistory({
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
+                          </div>
                         </div>
                         
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -300,6 +299,7 @@ export function ChatHistory({
                                 <><MessageSquare className="size-2.5 mr-1" />Chat</>
                               )}
                             </Badge>
+                            {renderProviderIcon(session.modelProvider)}
                             {session.modelId && (
                               <span className="text-xs opacity-70">
                                 {session.modelId.split('-')[0]}
@@ -413,15 +413,15 @@ export function ChatHistory({
                                 </Button>
                               </div>
                             </div>
-                          ) : (
-                            <>                              <div className="flex items-start justify-between mb-2">                                <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2 flex items-center gap-2">
+                          ) : (                            <>
+                              <div className="flex items-start justify-between mb-2">                                <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2">
                                   {session.title}
                                   {regeneratingTitleId === session.id && (
                                     <RefreshCw className="size-3 animate-spin text-muted-foreground" />
                                   )}
-                                </h4>                                {/* Inline action buttons for mobile */}
+                                </h4>
+                                {/* Inline action buttons for mobile */}
                                 <div className="flex items-center gap-1 shrink-0">
-                                  {renderProviderIcon(session.modelProvider)}
                                   <Button
                                     variant="outline"
                                     size="icon"
@@ -476,6 +476,7 @@ export function ChatHistory({
                                       <><MessageSquare className="size-2.5 mr-1" />Chat</>
                                     )}
                                   </Badge>
+                                  {renderProviderIcon(session.modelProvider)}
                                   {session.modelId && (
                                     <span className="text-xs opacity-70">
                                       {session.modelId.split('-')[0]}
@@ -593,14 +594,12 @@ export function ChatHistory({
                             </Button>
                           </div>
                         </div>
-                      ) : (
-                        <>
-                          <div className="flex items-start justify-between mb-2">
-                            <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2 flex items-center gap-2">
-                              {renderProviderIcon(session.modelProvider)}
+                      ) : (                        <>                          <div className="flex items-start justify-between mb-2">
+                            <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2">
                               {session.title}
                             </h4>
-                            <DropdownMenu>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="ghost"
@@ -639,25 +638,28 @@ export function ChatHistory({
                                 >
                                   <RefreshCw className="size-3 mr-2" />
                                   Regenerate Title
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
+                                </DropdownMenuItem>                              </DropdownMenuContent>
                             </DropdownMenu>
+                            </div>
                           </div>
                           
                           <div className="flex items-center justify-between text-xs text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                              <div className="flex items-center gap-1.5 text-xs mt-2 px-2 py-1 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
                                 {session.mode === 'agent' ? (
                                   <><Bot className="size-2.5 mr-1" />Agent</>
                                 ) : (
                                   <><MessageSquare className="size-2.5 mr-1" />Chat</>
                                 )}
-                              </Badge>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-xs mt-2 px-2 py-1 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit opacity-80">
+                              {renderProviderIcon(session.modelProvider)}
                               {session.modelId && (
-                                <span className="text-xs opacity-70">
-                                  {session.modelId.split('-')[0]}
+                                <span className="text-xs">
+                                  {session.modelId.split('-')[0].charAt(0).toUpperCase() + session.modelId.split('-')[0].slice(1)}
                                 </span>
                               )}
+                              </div>
                             </div>
                             <span>{formatTime(new Date(session.updatedAt))}</span>
                           </div>
