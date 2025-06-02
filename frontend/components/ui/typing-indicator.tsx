@@ -22,13 +22,13 @@ export function TypingIndicator({ mode = 'chat', modelId, modelProvider }: Typin
     : {
         avatarBg: 'bg-primary',
         avatarText: 'text-primary-foreground',
-        dotGradient: 'from-primary/60 to-primary/80',
-        borderColor: 'border-primary/15',
+        dotGradient: 'from-primary/60 to-primary/80',        borderColor: 'border-primary/15',
         spinnerBorder: 'border-muted-foreground/30 border-t-primary'
       }
+      
   return (
     <motion.div 
-      className="flex justify-start"
+      className="flex flex-col w-full max-w-full overflow-x-hidden items-start pl-4"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -38,7 +38,7 @@ export function TypingIndicator({ mode = 'chat', modelId, modelProvider }: Typin
         damping: 20 
       }}
     >
-      <div className="flex items-start space-x-3">        {/* Chat Bubble with Typing Animation */}
+      <div className="flex items-start">        {/* Chat Bubble with Typing Animation */}
         <motion.div 
           className="group/message relative break-words rounded-lg p-3 text-sm w-fit bg-muted text-foreground"
           initial={{ scale: 0.95, opacity: 0 }}
