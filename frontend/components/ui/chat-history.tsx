@@ -456,17 +456,14 @@ export function ChatHistory({
                           <div className="flex items-center gap-1 shrink-0">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <div className="flex items-center gap-1.5 text-xs px-2 py-0.5 bg-muted/50 dark:bg-muted/30 border-2 border-border rounded-md w-fit">
+                                <div className="flex items-center text-xs px-1 py-0.5 bg-muted/50 dark:bg-muted/30 border border-border hover:border-primary/50 rounded-md w-fit transition-all duration-200">
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className={cn(
-                                    "h-6 w-6 p-0 transition-opacity",
-                                    isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                                  )}
+                                  className="h-5 w-5 p-0"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <Settings className="size-3" />
+                                  <Settings className="size-3 transition-transform duration-300 hover:rotate-90" />
                                 </Button>
                                 </div>
                               </DropdownMenuTrigger>
@@ -485,7 +482,6 @@ export function ChatHistory({
                                     e.stopPropagation()
                                     handleDeleteSession(session.id)
                                   }}
-                                  className="text-destructive"
                                 >
                                   <Trash2 className="size-3 mr-2" />
                                   Delete
@@ -548,45 +544,67 @@ export function ChatHistory({
                                       } else {
                                         return `${totalFiles} file ref${totalFiles > 1 ? 's' : ''}`;
                                       }
-                                    })()}
-                                  </span>
-                                  {openFilePanels[session.id] ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+                                    })()}                                  </span>
+                                  <motion.div
+                                    animate={{ rotate: openFilePanels[session.id] ? 180 : 0 }}
+                                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                                  >
+                                    <ChevronDown className="size-3" />
+                                  </motion.div>
                                 </button>
                               )}
                             </div>
-                            
-
-                            {sessionHasFiles(session) && openFilePanels[session.id] && (
-                              <div className="mt-2 space-y-1 max-h-24 overflow-y-auto">
-                                {session.messages.map(msg => {
-                                  const files = extractFileReferences(msg);
-                                  return files.map(file => (<div key={file.id} className="flex items-center justify-between py-1 px-2 bg-muted/30 rounded text-xs">
-                                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                                      {getFileIcon(file.type, file.name)}
-                                      <span className="truncate" title={file.name}>{file.name}</span>
-                                      {file.url && (
-                                        <Badge variant="secondary" className="text-[10px] px-1 py-0">
-                                          Downloadable
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-6 w-6 p-0 shrink-0 flex items-center justify-center bg-muted/50 dark:bg-muted/30 border border-border rounded-sm"
-                                      title="Download file"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleFileDownload(file);
-                                      }}
-                                    >
-                                      <Download className="size-3" />
-                                    </Button>
+                                <AnimatePresence>
+                              {sessionHasFiles(session) && openFilePanels[session.id] && (
+                                <motion.div 
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ 
+                                    duration: 0.3, 
+                                    ease: "easeInOut",
+                                    opacity: { duration: 0.2 }
+                                  }}
+                                  className="mt-2 space-y-1 max-h-24 overflow-hidden"
+                                >
+                                  <div className="overflow-y-auto max-h-24">
+                                    {session.messages.map(msg => {
+                                      const files = extractFileReferences(msg);
+                                      return files.map(file => (<motion.div 
+                                        key={file.id} 
+                                        initial={{ x: -10, opacity: 0 }}
+                                        animate={{ x: 0, opacity: 1 }}
+                                        transition={{ delay: 0.1, duration: 0.2 }}
+                                        className="flex items-center justify-between py-1 px-2 bg-muted/30 rounded text-xs"
+                                      >
+                                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                          {getFileIcon(file.type, file.name)}
+                                          <span className="truncate" title={file.name}>{file.name}</span>
+                                          {file.url && (
+                                            <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                                              Downloadable
+                                            </Badge>
+                                          )}
+                                        </div>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 w-6 p-0 shrink-0 flex items-center justify-center bg-muted/50 dark:bg-muted/30 border border-border rounded-sm"
+                                          title="Download file"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleFileDownload(file);
+                                          }}
+                                        >
+                                          <Download className="size-3" />
+                                        </Button>
+                                      </motion.div>
+                                      ));
+                                    })}
                                   </div>
-                                  ));
-                                })}
-                              </div>
-                            )}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
                         </div>
                       </>
