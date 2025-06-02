@@ -268,11 +268,20 @@ export function ChatHistory({
                   {groupName}
                 </h3>
                 <div className="space-y-1">
-                  {groupSessions.map((session) => (
-                    <motion.div
+                  {groupSessions.map((session) => (                    <motion.div
                       key={session.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={{ 
+                        opacity: 0, 
+                        ...(isMobile 
+                          ? { y: 20 } 
+                          : { x: -20 })
+                      }}
+                      animate={{ 
+                        opacity: 1, 
+                        ...(isMobile 
+                          ? { y: 0 } 
+                          : { x: 0 })
+                      }}
                       className={cn(
                         "group relative rounded-lg border-2 p-3 cursor-pointer transition-all duration-200",
                         "hover:bg-accent/50 hover:border-accent-foreground/20",
@@ -447,7 +456,11 @@ export function ChatHistory({
           >
             <History className="size-4" />
           </Button>
-        </DrawerTrigger>        <DrawerContent className="h-[85vh]">
+        </DrawerTrigger>
+        <DrawerContent className="h-[85vh]">
+          <DrawerHeader>
+            <DrawerTitle className="sr-only">Chat History</DrawerTitle>
+          </DrawerHeader>
           <div className="flex flex-col h-full">
             {ChatHistoryContent}
           </div>
@@ -467,7 +480,11 @@ export function ChatHistory({
         >
           <History className="size-4" />
         </Button>
-      </SheetTrigger>      <SheetContent side="left" className="w-96 p-0 flex flex-col">
+      </SheetTrigger>
+      <SheetContent side="left" className="w-96 p-0 flex flex-col">
+        <SheetHeader className="sr-only">
+          <SheetTitle>Chat History</SheetTitle>
+        </SheetHeader>
         {ChatHistoryContent}
       </SheetContent>
     </Sheet>
