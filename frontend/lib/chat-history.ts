@@ -35,6 +35,34 @@ function generateTitle(messages: ExtendedMessage[]): string {
   return content.length < firstUserMessage.content.length ? content + '...' : content
 }
 
+// Generate a title using AI based on the conversation
+async function generateAITitle(messages: ExtendedMessage[]): Promise<string> {
+  try {
+    // Take the first few messages to understand the conversation context
+    const contextMessages = messages.slice(0, 6).map(msg => `${msg.role}: ${msg.content}`).join('\n')
+    
+    const response = await fetch('/api/generate-title', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        conversation: contextMessages
+      })
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to generate title')
+    }
+    
+    const data = await response.json()
+    return data.title || generateTitle(messages)
+  } catch (error) {
+    console.error('Error generating AI title:', error)
+    return generateTitle(messages) // Fallback to simple title generation
+  }
+}
+
 // Get all chat sessions from localStorage
 export function getChatSessions(): ChatSession[] {
   try {
@@ -57,27 +85,70 @@ export function getChatSessions(): ChatSession[] {
   }
 }
 
-// Save a chat session
-export function saveChatSession(
+// Save a chat session with AI-generated title
+export async function saveChatSession(
   messages: Message[], 
   mode: 'agent' | 'chat',
   modelId?: string,
   modelProvider?: 'openrouter' | 'google',
   existingSessionId?: string
-): string {
+): Promise<string> {
   if (messages.length === 0) return ''
-  
-  try {
+    try {
     const sessions = getChatSessions()
     const now = new Date()
     
-    // Convert messages to extended format with proper createdAt dates
-    const processedMessages: ExtendedMessage[] = messages.map(message => ({
-      ...message,
-      createdAt: now, // Use current time for all messages since AI SDK doesn't provide createdAt
-      modelId,
-      modelProvider
-    }))
+    let processedMessages: ExtendedMessage[]
+    
+    if (existingSessionId) {
+      // When updating an existing session, preserve original timestamps
+      const existingSession = sessions.find(s => s.id === existingSessionId)
+      const existingMessages = existingSession?.messages || []
+      
+      processedMessages = messages.map((message, index) => {
+        // Check if this message already exists (by id or position)
+        const existingMessage = existingMessages.find(em => em.id === message.id) ||
+                              existingMessages[index]
+        
+        if (existingMessage && existingMessage.content === message.content) {
+          // Preserve original timestamp for existing messages
+          return {
+            ...message,
+            createdAt: existingMessage.createdAt,
+            modelId,
+            modelProvider
+          }
+        } else {
+          // New message gets current timestamp
+          return {
+            ...message,
+            createdAt: new Date(now.getTime() - (messages.length - index - 1) * 100),
+            modelId,
+            modelProvider
+          }
+        }
+      })
+    } else {
+      // New session: create incremental timestamps for all messages
+      processedMessages = messages.map((message, index) => ({
+        ...message,
+        createdAt: new Date(now.getTime() - (messages.length - index - 1) * 1000),
+        modelId,
+        modelProvider
+      }))
+    }
+    
+    // Generate AI title for new sessions or when updating with new messages
+    const shouldGenerateNewTitle = !existingSessionId || 
+      (existingSessionId && sessions.find(s => s.id === existingSessionId)?.messages.length !== processedMessages.length)
+    
+    let title: string
+    if (shouldGenerateNewTitle) {
+      title = await generateAITitle(processedMessages)
+    } else {
+      const existingSession = sessions.find(s => s.id === existingSessionId)
+      title = existingSession?.title || await generateAITitle(processedMessages)
+    }
     
     if (existingSessionId) {
       // Update existing session
@@ -87,7 +158,7 @@ export function saveChatSession(
           ...sessions[sessionIndex],
           messages: processedMessages,
           updatedAt: now,
-          title: generateTitle(processedMessages),
+          title,
           mode,
           modelId,
           modelProvider
@@ -97,7 +168,7 @@ export function saveChatSession(
       // Create new session
       const newSession: ChatSession = {
         id: generateId(),
-        title: generateTitle(processedMessages),
+        title,
         messages: processedMessages,
         createdAt: now,
         updatedAt: now,
@@ -154,6 +225,24 @@ export function clearAllChatHistory(): void {
     localStorage.removeItem(CHAT_HISTORY_KEY)
   } catch (error) {
     console.error('Error clearing chat history:', error)
+  }
+}
+
+// Regenerate AI title for an existing session
+export async function regenerateSessionTitle(sessionId: string): Promise<void> {
+  try {
+    const sessions = getChatSessions()
+    const sessionIndex = sessions.findIndex(s => s.id === sessionId)
+    if (sessionIndex === -1) return
+    
+    const session = sessions[sessionIndex]
+    const newTitle = await generateAITitle(session.messages)
+    
+    sessions[sessionIndex].title = newTitle
+    sessions[sessionIndex].updatedAt = new Date()
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(sessions))
+  } catch (error) {
+    console.error('Error regenerating session title:', error)
   }
 }
 

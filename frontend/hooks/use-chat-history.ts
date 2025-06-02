@@ -27,7 +27,6 @@ export function useChatHistory({
   const [currentSessionId, setCurrentSessionId] = useState<string | undefined>()
   const [isNewSession, setIsNewSession] = useState(true)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
   // Auto-save chat session when messages change
   useEffect(() => {
     if (messages.length === 0) return
@@ -38,18 +37,22 @@ export function useChatHistory({
     }
 
     // Save after a short delay to avoid excessive saves
-    saveTimeoutRef.current = setTimeout(() => {
-      const sessionId = saveChatSession(
-        messages,
-        mode,
-        modelId,
-        modelProvider,
-        currentSessionId
-      )
-      
-      if (sessionId && !currentSessionId) {
-        setCurrentSessionId(sessionId)
-        setIsNewSession(false)
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const sessionId = await saveChatSession(
+          messages,
+          mode,
+          modelId,
+          modelProvider,
+          currentSessionId
+        )
+        
+        if (sessionId && !currentSessionId) {
+          setCurrentSessionId(sessionId)
+          setIsNewSession(false)
+        }
+      } catch (error) {
+        console.error('Failed to save chat session:', error)
       }
     }, 1000)
 
@@ -77,21 +80,24 @@ export function useChatHistory({
     setCurrentSessionId(undefined)
     setIsNewSession(true)
   }, [setMessages])
-
   // Force save current session
-  const saveCurrentSession = useCallback(() => {
+  const saveCurrentSession = useCallback(async () => {
     if (messages.length > 0) {
-      const sessionId = saveChatSession(
-        messages,
-        mode,
-        modelId,
-        modelProvider,
-        currentSessionId
-      )
-      
-      if (sessionId && !currentSessionId) {
-        setCurrentSessionId(sessionId)
-        setIsNewSession(false)
+      try {
+        const sessionId = await saveChatSession(
+          messages,
+          mode,
+          modelId,
+          modelProvider,
+          currentSessionId
+        )
+        
+        if (sessionId && !currentSessionId) {
+          setCurrentSessionId(sessionId)
+          setIsNewSession(false)
+        }
+      } catch (error) {
+        console.error('Failed to save current session:', error)
       }
     }
   }, [messages, mode, modelId, modelProvider, currentSessionId])

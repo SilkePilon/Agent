@@ -190,16 +190,15 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>      {/* Chat Input Container - moves from center to bottom */}      
-      <div className="relative">
-        {/* Chat History Button - positioned absolutely */}
+      <div className="relative">        {/* Chat History Button - responsive positioning to avoid input overlap */}
         {messages.length > 0 && (
           <motion.div
-            className="fixed left-4 bottom-20 z-50"
+            className="fixed left-4 bottom-32 sm:bottom-28 md:left-6 md:bottom-24 z-50"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ delay: 0.2 }}
-          >            <ChatHistory
+          ><ChatHistory
               onLoadSession={(session) => {
                 setMessageTimestamps({})
                 chatHistory.loadSession(session)

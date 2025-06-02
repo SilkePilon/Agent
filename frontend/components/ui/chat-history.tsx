@@ -12,7 +12,8 @@ import {
   Plus,
   MoreVertical,
   Bot,
-  User
+  User,
+  RefreshCw
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -45,7 +46,8 @@ import { Badge } from "@/components/ui/badge"
 import { 
   getChatSessions, 
   deleteChatSession, 
-  updateSessionTitle, 
+  updateSessionTitle,
+  regenerateSessionTitle,
   type ChatSession 
 } from "@/lib/chat-history"
 
@@ -66,6 +68,7 @@ export function ChatHistory({
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState("")
   const [isOpen, setIsOpen] = useState(false)
+  const [regeneratingTitleId, setRegeneratingTitleId] = useState<string | null>(null)
   const isMobile = useIsMobile()
 
   const refreshSessions = useCallback(() => {
@@ -81,6 +84,18 @@ export function ChatHistory({
     setEditingSessionId(session.id)
     setEditTitle(session.title)
   }, [])
+
+  const handleRegenerateTitle = useCallback(async (sessionId: string) => {
+    setRegeneratingTitleId(sessionId)
+    try {
+      await regenerateSessionTitle(sessionId)
+      refreshSessions()
+    } catch (error) {
+      console.error('Failed to regenerate title:', error)
+    } finally {
+      setRegeneratingTitleId(null)
+    }
+  }, [refreshSessions])
 
   const handleSaveEdit = useCallback(() => {
     if (editingSessionId && editTitle.trim()) {
@@ -248,6 +263,15 @@ export function ChatHistory({
                                 <Trash2 className="size-3 mr-2" />
                                 Delete
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleRegenerateTitle(session.id)
+                                }}
+                              >
+                                <RefreshCw className="size-3 mr-2" />
+                                Regenerate Title
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -324,8 +348,7 @@ export function ChatHistory({
                   <Plus className="size-4 mr-1" />
                   New
                 </Button>
-              </div>
-            </DrawerHeader>
+              </div>            </DrawerHeader>
             
             <ScrollArea className="flex-1 px-4">
               <div className="py-4 space-y-6">
@@ -336,10 +359,8 @@ export function ChatHistory({
                     </h3>
                     <div className="space-y-1">
                       {groupSessions.map((session) => (
-                        <motion.div
+                        <div
                           key={session.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
                           className={cn(
                             "group relative rounded-lg border p-3 cursor-pointer transition-all duration-200",
                             "hover:bg-accent/50 hover:border-accent-foreground/20",
@@ -415,6 +436,15 @@ export function ChatHistory({
                                       <Trash2 className="size-3 mr-2" />
                                       Delete
                                     </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleRegenerateTitle(session.id)
+                                      }}
+                                    >
+                                      <RefreshCw className="size-3 mr-2" />
+                                      Regenerate Title
+                                    </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </div>
@@ -441,8 +471,7 @@ export function ChatHistory({
                                 {session.messages.length} message{session.messages.length !== 1 ? 's' : ''}
                               </div>
                             </>
-                          )}
-                        </motion.div>
+                          )}                        </div>
                       ))}
                     </div>
                   </div>
@@ -583,6 +612,15 @@ export function ChatHistory({
                                 >
                                   <Trash2 className="size-3 mr-2" />
                                   Delete
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleRegenerateTitle(session.id)
+                                  }}
+                                >
+                                  <RefreshCw className="size-3 mr-2" />
+                                  Regenerate Title
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
