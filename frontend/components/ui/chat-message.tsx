@@ -218,128 +218,63 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     )
   }
 
-  if (parts && parts.length > 0) {
-    // Find the last text part index for assistant messages
-    const lastTextPartIndex = parts.map((p, i) => p.type === "text" ? i : -1).filter(i => i !== -1).pop();
-    
-    return parts.map((part, index) => {
-      if (part.type === "text") {
-        return (
-          <div
-            className={cn(
-              "flex flex-col w-full max-w-full overflow-x-hidden",
-              isUser ? "items-end pr-4" : "items-start pl-4"
-            )}
-            key={`text-${index}`}
-          >
-            <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
-              {!isUser && role === 'assistant' ? (
-                <div className="prose dark:prose-invert lg:prose-md prose-pre:p-0 prose-pre:m-0 prose-pre:bg-transparent">
-                  <AnimatedMarkdown
-                    content={part.text}
-                    animation="typewriter"
-                    sep="char"
-                    animationDuration="0.05s"
-                    animationTimingFunction="linear"
-                    codeStyle={githubLight}
-                  />
-                </div>
-              ) : (
-                <MarkdownRenderer>{part.text}</MarkdownRenderer>
-              )}
-              
-              {/* Show model badge inside the bubble for assistant messages */}
-              {!isUser && index === lastTextPartIndex && role === "assistant" && (
-                <ModelBadge modelProvider={modelProvider} modelId={modelId} />
-              )}
-              
-              {actions ? (
-                <div className={cn(
-                  "absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground transition-opacity",
-                  messageActionsAlwaysVisible 
-                    ? "opacity-100" 
-                    : "opacity-0 group-hover/message:opacity-100"
-                )}>
-                  {actions}
-                </div>
-              ) : null}
-            </div>
-
-            
-            {showTimeStamp && createdAt ? (
-              <time
-                dateTime={createdAt.toISOString()}
-                className={cn(
-                  "mt-1 block px-1 text-xs opacity-50",
-                  animation !== "none" && "duration-500 animate-in fade-in-0"
-                )}
-              >
-                {formattedTime}
-              </time>
-            ) : null}
-          </div>
-        )
-      } else if (part.type === "reasoning") {
-        return <ReasoningBlock key={`reasoning-${index}`} part={part} />
-      } else if (part.type === "tool-invocation") {
-        return (
-          <ToolCall
-            key={`tool-${index}`}
-            toolInvocations={[part.toolInvocation]}
-            mode={mode}
-            setMode={setMode}
-            append={append}
-          />
-        )
-      }
-      return null
-    })
-  }
-
-  if (toolInvocations && toolInvocations.length > 0) {
-    return (
-      <div className="flex flex-col">
-        <ToolCall toolInvocations={toolInvocations} mode={mode} setMode={setMode} append={append} />
-      </div>
-    )
-  }
-
+  // Assistant message rendering
   return (
-    <div className={cn("flex flex-col w-full max-w-full overflow-x-hidden", isUser ? "items-end" : "items-start")}>
-      <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
-        {!isUser && role === 'assistant' ? (
-          <div className="prose dark:prose-invert lg:prose-md prose-pre:p-0 prose-pre:m-0 prose-pre:bg-transparent">
+    <div className={cn("flex flex-col w-full max-w-full overflow-x-hidden items-start pl-4")}>
+      {/* Main content bubble with AnimatedMarkdown */}
+      {(content || (parts && parts.some(p => p.type === 'text'))) && (
+        <div className={cn(chatBubbleVariants({ isUser, animation, mode }))}>
+          <div className="prose dark:prose-invert lg:prose-md prose-pre:m-0">
             <AnimatedMarkdown
-              content={content}
+              content={content} // Always use the main content prop for streaming
               animation="typewriter"
               sep="char"
-              animationDuration="0.05s"
+              animationDuration="0.15s"
               animationTimingFunction="linear"
               codeStyle={githubLight}
+              customComponents={flowtokenCustomComponents}
             />
           </div>
-        ) : (
-          <MarkdownRenderer>{content}</MarkdownRenderer>
-        )}
-        
-        {/* Show model badge inside the bubble for assistant messages */}
-        {!isUser && role === "assistant" && (
-          <ModelBadge modelProvider={modelProvider} modelId={modelId} />
-        )}
-        
-        {actions ? (
-          <div className={cn(
-            "absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground transition-opacity",
-            messageActionsAlwaysVisible 
-              ? "opacity-100" 
-              : "opacity-0 group-hover/message:opacity-100"
-          )}>
-            {actions}
-          </div>
-        ) : null}
-      </div>
+          {!isUser && role === "assistant" && (
+            <ModelBadge modelProvider={modelProvider} modelId={modelId} />
+          )}
+          {actions && (
+            <div className={cn(
+              "absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground transition-opacity",
+              messageActionsAlwaysVisible
+                ? "opacity-100"
+                : "opacity-0 group-hover/message:opacity-100"
+            )}>
+              {actions}
+            </div>
+          )}
+        </div>
+      )}
 
-      {showTimeStamp && createdAt ? (
+      {/* Render non-text parts like tool calls and reasoning blocks */}
+      {parts && parts.length > 0 && parts.map((part, index) => {
+        if (part.type === "reasoning") {
+          return <ReasoningBlock key={`reasoning-${index}`} part={part} />;
+        } else if (part.type === "tool-invocation") {
+          return (
+            <ToolCall
+              key={`tool-${index}`}
+              toolInvocations={[part.toolInvocation]}
+              mode={mode}
+              setMode={setMode}
+              append={append}
+            />
+          );
+        }
+        return null;
+      })}
+
+      {/* Render toolInvocations if they exist and are not part of `parts` */}
+      {toolInvocations && (!parts || !parts.some(p => p.type === 'tool-invocation')) && toolInvocations.length > 0 && (
+         <ToolCall toolInvocations={toolInvocations} mode={mode} setMode={setMode} append={append} />
+      )}
+
+      {showTimeStamp && createdAt && (
         <time
           dateTime={createdAt.toISOString()}
           className={cn(
@@ -349,10 +284,26 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         >
           {formattedTime}
         </time>
-      ) : null}
+      )}
     </div>
-  )
+  );
 }
+
+const flowtokenCustomComponents = {
+  h1: ({ animateText, node, children, ...props }: any) => animateText(React.createElement('h1', { className: 'text-2xl font-semibold', ...props }, children)),
+  h2: ({ animateText, node, children, ...props }: any) => animateText(React.createElement('h2', { className: 'font-semibold text-xl', ...props }, children)),
+  h3: ({ animateText, node, children, ...props }: any) => animateText(React.createElement('h3', { className: 'font-semibold text-lg', ...props }, children)),
+  h4: ({ animateText, node, children, ...props }: any) => animateText(React.createElement('h4', { className: 'font-semibold text-base', ...props }, children)),
+  h5: ({ animateText, node, children, ...props }: any) => animateText(React.createElement('h5', { className: 'font-medium', ...props }, children)),
+  strong: ({ animateText, node, children, ...props }: any) => animateText(React.createElement('strong', { className: 'font-semibold', ...props }, children)),
+  a: ({ animateText, node, children, href, ...props }: any) => animateText(React.createElement('a', { href, className: 'text-primary underline underline-offset-2', target: '_blank', rel: 'noopener noreferrer', ...props }, children)),
+  blockquote: ({ animateText, node, children, ...props }: any) => animateText(React.createElement('blockquote', { className: 'border-l-2 border-primary pl-4', ...props }, children)),
+  ol: ({ animateText, node, children, ...props }: any) => animateText(React.createElement('ol', { className: 'list-decimal space-y-2 pl-6', ...props }, children)),
+  ul: ({ animateText, node, children, ...props }: any) => animateText(React.createElement('ul', { className: 'list-disc space-y-2 pl-6', ...props }, children)),
+  li: ({ animateText, node, children, ...props }: any) => animateText(React.createElement('li', { className: 'my-1.5', ...props }, children)),
+  p: ({ animateText, node, children, ...props }: any) => animateText(React.createElement('p', { className: 'whitespace-pre-wrap', ...props }, children)),
+  hr: ({ animateText, node, children, ...props }: any) => animateText(React.createElement('hr', { className: 'border-foreground/20', ...props }, children)),
+};
 
 function dataUrlToUint8Array(data: string) {
   const base64 = data.split(",")[1]
