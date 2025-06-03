@@ -444,13 +444,13 @@ export function ModelSelector({ selectedModel, onModelSelect, provider, children
   const selectedModelName = useMemo(() => {
     if (!selectedModel) return 'Select Model'
     const model = models.find(m => m.id === selectedModel)
-    return model?.name || selectedModel.split('/').pop()?.split(':')[0] || 'Unknown Model'
-  }, [selectedModel, models])
+    return model?.name || selectedModel.split('/').pop()?.split(':')[0] || 'Unknown Model'  }, [selectedModel, models])
+
   const triggerButton = children || (
         <Button 
             variant="outline" 
-            className="justify-between text-foreground truncate overflow-hidden text-ellipsis border-2">
-          <span className="truncate">{selectedModelName}</span>
+            className="justify-between text-foreground truncate overflow-hidden text-ellipsis border-2 w-full max-w-full">
+          <span className="truncate flex-1 text-left">{selectedModelName}</span>
           <ChevronDown className="h-4 w-4 ml-2 flex-shrink-0" />
         </Button>
     )
