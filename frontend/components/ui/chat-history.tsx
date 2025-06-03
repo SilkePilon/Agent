@@ -343,11 +343,10 @@ export function ChatHistory({
     </div>
 
       <ScrollArea className="flex-1 px-4">
-        <div className="py-4 space-y-4">
-          {/* New Chat Button */}
+        <div className="py-4 space-y-4">          {/* New Chat Button */}
           <Button
             onClick={handleNewChat}
-            className="w-full"
+            className="w-full h-8 text-xs transition-all duration-200 bg-green-500 hover:bg-green-600 text-white shadow-sm"
             size="sm"
           >
             <Plus className="size-4 mr-2" />
@@ -363,14 +362,17 @@ export function ChatHistory({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
-            </div>
-
-            <div className="flex gap-2">
+            </div>            <div className="flex gap-1">
               <Button
                 variant={filterMode === 'all' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilterMode('all')}
-                className="flex-1"
+                className={cn(
+                  "flex-1 h-8 text-xs transition-all duration-200",
+                  filterMode === 'all'
+                    ? "bg-blue-500 hover:bg-blue-600 text-white shadow-sm"
+                    : "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-foreground border-2"
+                )}
               >
                 All
               </Button>
@@ -378,7 +380,12 @@ export function ChatHistory({
                 variant={filterMode === 'chat' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilterMode('chat')}
-                className="flex-1"
+                className={cn(
+                  "flex-1 h-8 text-xs transition-all duration-200",
+                  filterMode === 'chat'
+                    ? "bg-green-500 hover:bg-green-600 text-white shadow-sm"
+                    : "hover:bg-green-50 hover:text-green-600 hover:border-green-200 text-foreground border-2"
+                )}
               >
                 <MessageSquare className="size-3 mr-1" />
                 Chat
@@ -387,7 +394,12 @@ export function ChatHistory({
                 variant={filterMode === 'agent' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilterMode('agent')}
-                className="flex-1"
+                className={cn(
+                  "flex-1 h-8 text-xs transition-all duration-200",
+                  filterMode === 'agent'
+                    ? "bg-purple-500 hover:bg-purple-600 text-white shadow-sm"
+                    : "hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 text-foreground border-2"
+                )}
               >
                 <Bot className="size-3 mr-1" />
                 Agent
@@ -435,13 +447,12 @@ export function ChatHistory({
                           }}
                           className="h-7 text-sm"
                           autoFocus
-                        />
-                        <div className="flex items-center gap-1">
+                        />                        <div className="flex items-center gap-1">
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={handleSaveEdit}
-                            className="h-6 w-6 p-0"
+                            className="h-6 w-6 p-0 hover:bg-green-50 hover:text-green-600 transition-all duration-200"
                           >
                             <Check className="size-3" />
                           </Button>
@@ -449,7 +460,7 @@ export function ChatHistory({
                             size="sm"
                             variant="ghost"
                             onClick={handleCancelEdit}
-                            className="h-6 w-6 p-0"
+                            className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
                           >
                             <X className="size-3" />                          </Button>
                         </div>
@@ -459,14 +470,13 @@ export function ChatHistory({
                           <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2">
                             {session.title}
                           </h4>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <DropdownMenu>
+                          <div className="flex items-center gap-1 shrink-0">                            <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <div className="flex items-center text-xs px-1 py-0.5 bg-muted/50 dark:bg-muted/30 border border-border hover:border-primary/50 rounded-md w-fit transition-all duration-200">
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-5 w-5 p-0"
+                                  className="h-5 w-5 p-0 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <Settings className="size-3 transition-transform duration-300 hover:rotate-90" />
@@ -591,11 +601,10 @@ export function ChatHistory({
                                               Downloadable
                                             </Badge>
                                           )}
-                                        </div>
-                                        <Button
+                                        </div>                                        <Button
                                           variant="ghost"
                                           size="sm"
-                                          className="h-6 w-6 p-0 shrink-0 flex items-center justify-center bg-muted/50 dark:bg-muted/30 border border-border rounded-sm"
+                                          className="h-6 w-6 p-0 shrink-0 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 border border-border rounded-sm"
                                           title="Download file"
                                           onClick={(e) => {
                                             e.stopPropagation();
@@ -633,15 +642,14 @@ export function ChatHistory({
             )}          </div>
         </div>
       </ScrollArea>
-      
-      {/* Clear All Button */}
+        {/* Clear All Button */}
       {sessions.length > 0 && (
         <div className="px-6 py-4 border-t">
           <Button
             onClick={handleClearAll}
             variant="outline"
             size="sm"
-            className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="w-full h-8 text-xs transition-all duration-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-foreground border-2"
           >
             <Trash2 className="size-4 mr-2" />
             Clear All
@@ -675,13 +683,12 @@ export function ChatHistory({
     extractFileReferences
   ])
   if (isMobile) {
-    return (
-      <Drawer open={isOpen} onOpenChange={setIsOpen}>
+    return (      <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerTrigger asChild>
           <Button
             variant="outline"
             size="icon"
-            className={cn("shrink-0", className)}
+            className={cn("shrink-0 h-8 text-xs transition-all duration-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border-2", className)}
             onClick={refreshSessions}
           >
             <History className="size-4" />
@@ -699,13 +706,12 @@ export function ChatHistory({
     )
   }
 
-  return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+  return (    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <Button
           variant="outline"
           size="icon"
-          className={cn("shrink-0", className)}
+          className={cn("shrink-0 h-8 text-xs transition-all duration-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border-2", className)}
           onClick={refreshSessions}
         >
           <History className="size-4" />
