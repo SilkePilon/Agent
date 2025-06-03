@@ -9,8 +9,21 @@ import { join } from 'path';
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
+// Function to modify system prompt based on response style
+function getResponseStyleInstruction(style: 'concise' | 'normal' | 'detailed'): string {
+  switch (style) {
+    case 'concise':
+      return '\n\nIMPORTANT: Keep your responses very concise and to the point. Use bullet points when appropriate and avoid lengthy explanations unless specifically requested.';
+    case 'detailed':
+      return '\n\nIMPORTANT: Provide comprehensive, detailed responses with thorough explanations, examples, and context. Include relevant background information and step-by-step breakdowns when helpful.';
+    case 'normal':
+    default:
+      return '';
+  }
+}
+
 export async function POST(req: Request) {
-  const { messages, mode = 'agent', provider = 'openrouter', selectedModel = 'google/gemini-2.5-flash-preview-05-20:thinking' } = await req.json();
+  const { messages, mode = 'agent', provider = 'openrouter', selectedModel = 'google/gemini-2.5-flash-preview-05-20:thinking', responseStyle = 'normal' } = await req.json();
   const openrouter = createOpenRouter({
     apiKey: process.env.OPENROUTER_API_KEY,
   });
@@ -282,8 +295,7 @@ I am pleased to present this proposal for your review...`
             };
           },
         })
-      },
-      system: `You are an advanced AI Agent capable of performing a wide variety of tasks. You have access to multiple tools that allow you to:
+      },      system: `You are an advanced AI Agent capable of performing a wide variety of tasks. You have access to multiple tools that allow you to:
 
 - Perform mathematical calculations and data analysis
 - Search for information and research topics
@@ -300,7 +312,7 @@ When a user gives you a task:
 4. Provide clear, helpful responses with actionable insights
 5. If a task requires multiple steps, explain your process
 
-Always be proactive in suggesting how you can help accomplish the user's goals. If you need clarification, ask specific questions to better understand their needs.`,
+Always be proactive in suggesting how you can help accomplish the user's goals. If you need clarification, ask specific questions to better understand their needs.${getResponseStyleInstruction(responseStyle)}`,
     });
 
     const response = result.toDataStreamResponse();
@@ -312,10 +324,9 @@ Always be proactive in suggesting how you can help accomplish the user's goals. 
   }  // Normal chat mode - simple conversation with no tools
   const result = streamText({
     ...baseConfig,
-    tools: {},
-    system: `You are a helpful AI assistant in Chat Mode. You can engage in natural conversation, answer questions, and provide helpful information on a wide variety of topics.
+    tools: {},    system: `You are a helpful AI assistant in Chat Mode. You can engage in natural conversation, answer questions, and provide helpful information on a wide variety of topics.
 
-Be conversational, friendly, and helpful. Provide thoughtful responses to user questions and engage in meaningful dialogue.`,
+Be conversational, friendly, and helpful. Provide thoughtful responses to user questions and engage in meaningful dialogue.${getResponseStyleInstruction(responseStyle)}`,
   });
 
   const response = result.toDataStreamResponse();

@@ -24,6 +24,8 @@ interface ChatInputProps {
   setProvider?: (provider: 'openrouter' | 'google') => void
   selectedModel?: string
   setSelectedModel?: (model: string) => void
+  responseStyle?: 'concise' | 'normal' | 'detailed'
+  setResponseStyle?: (style: 'concise' | 'normal' | 'detailed') => void
   hasMessages?: boolean
   isFocused?: boolean
   setIsFocused?: (focused: boolean) => void
@@ -53,6 +55,8 @@ export function ChatInput({
   setProvider,
   selectedModel,
   setSelectedModel,
+  responseStyle,
+  setResponseStyle,
   hasMessages = false,
   isFocused = false,
   setIsFocused,
@@ -133,6 +137,12 @@ export function ChatInput({
           >
             <Bot className="h-3 w-3" />
             <span className="font-medium">Agent Mode Active</span>
+            {responseStyle && (
+              <>
+                <span className="text-blue-200">•</span>
+                <span className="font-medium capitalize">{responseStyle} responses</span>
+              </>
+            )}
           </motion.div>
         )}        {isFocused && mode === 'chat' && (
           <motion.div 
@@ -161,6 +171,12 @@ export function ChatInput({
           >
             <MessageCircle strokeWidth={3} className="h-3 w-3" />
             <span className="font-medium">Chat Mode Active</span>
+            {responseStyle && (
+              <>
+                <span className="text-green-200">•</span>
+                <span className="font-medium capitalize">{responseStyle} responses</span>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>      <form onSubmit={onSubmit} className="relative z-10 transition-all duration-300 ease-out" ref={formRef}>        <MessageInput
@@ -178,6 +194,8 @@ export function ChatInput({
           setProvider={setProvider}
           selectedModel={selectedModel}
           setSelectedModel={setSelectedModel}
+          responseStyle={responseStyle}
+          setResponseStyle={setResponseStyle}
           clearMessages={clearMessages}
           hasMessages={hasMessages}
           onFocus={() => setIsFocused?.(true)}

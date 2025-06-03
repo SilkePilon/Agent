@@ -14,6 +14,7 @@ export default function Home() {
   const [fallbackActive, setFallbackActive] = useState(false);
   const [provider, setProvider] = useState<'openrouter' | 'google'>('google');
   const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash-preview-05-20');
+  const [responseStyle, setResponseStyle] = useState<'concise' | 'normal' | 'detailed'>('normal');
   const [isFocused, setIsFocused] = useState(false);
   const [messageActionsAlwaysVisible, setMessageActionsAlwaysVisible] = useState(false);
   const retryAttemptRef = useRef(false);
@@ -44,13 +45,14 @@ export default function Home() {
         retryAttemptRef.current = false;
       }, 5000);
     }
-  }, []);    // Chat hook with error handling
+  }, []);  // Chat hook with error handling
   const { messages, input, handleInputChange, handleSubmit, isLoading, stop, append, setMessages } = useChat({
     body: { 
       mode,
       retryWithFallback: retryAttemptRef.current,
       provider,
-      selectedModel
+      selectedModel,
+      responseStyle
     },
     onError: handleChatError,
     onResponse: (response) => {
@@ -211,8 +213,7 @@ export default function Home() {
             />
           </motion.div>
         )}
-        
-        <ChatInput
+          <ChatInput
           input={input}
           handleInputChange={handleInputChange}
           handleSubmit={enhancedHandleSubmit}
@@ -224,6 +225,8 @@ export default function Home() {
           setProvider={setProvider}
           selectedModel={selectedModel}
           setSelectedModel={setSelectedModel}
+          responseStyle={responseStyle}
+          setResponseStyle={setResponseStyle}
           hasMessages={messages.length > 0}
           isFocused={isFocused}
           setIsFocused={setIsFocused}

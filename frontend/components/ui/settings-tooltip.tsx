@@ -76,6 +76,8 @@ interface SettingsTooltipProps {
     setProvider?: (provider: 'openrouter' | 'google') => void
     selectedModel?: string
     setSelectedModel?: (model: string) => void
+    responseStyle?: 'concise' | 'normal' | 'detailed'
+    setResponseStyle?: (style: 'concise' | 'normal' | 'detailed') => void
     children: React.ReactNode
     messageActionsAlwaysVisible?: boolean
     setMessageActionsAlwaysVisible?: (value: boolean) => void
@@ -95,6 +97,8 @@ interface SettingsFormContentsProps {
     setProvider?: (provider: 'openrouter' | 'google') => void
     selectedModel?: string
     setSelectedModel?: (model: string) => void
+    responseStyle?: 'concise' | 'normal' | 'detailed'
+    setResponseStyle?: (style: 'concise' | 'normal' | 'detailed') => void
     messageActionsAlwaysVisible?: boolean
     setMessageActionsAlwaysVisible?: (value: boolean) => void
     getCurrentProvider: () => string
@@ -116,7 +120,10 @@ export function SettingsFormContents({
     setMode,
     provider,
     setProvider,
-    selectedModel,    setSelectedModel,
+    selectedModel,    
+    setSelectedModel,
+    responseStyle,
+    setResponseStyle,
     messageActionsAlwaysVisible = false,
     setMessageActionsAlwaysVisible,
     getCurrentProvider,
@@ -211,7 +218,59 @@ export function SettingsFormContents({
                         onModelSelect={setSelectedModel}
                         provider={provider}
                         onOpenChange={onModelSelectorOpenChange}
-                    />
+                    />                </div>
+            )}
+
+            {/* Response Style Selection */}
+            {responseStyle && setResponseStyle && (
+                <div className="space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">Response Style</div>
+                    <div className="grid grid-cols-3 gap-1">
+                        <Button
+                            variant={responseStyle === 'concise' ? 'default' : 'outline'}
+                            size="sm"
+                            className={cn(
+                                "h-8 text-xs transition-all duration-200",
+                                responseStyle === 'concise'
+                                    ? "bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
+                                    : "hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 text-foreground border-2"
+                            )}
+                            onClick={() => setResponseStyle('concise')}
+                        >
+                            Concise
+                        </Button>
+                        <Button
+                            variant={responseStyle === 'normal' ? 'default' : 'outline'}
+                            size="sm"
+                            className={cn(
+                                "h-8 text-xs transition-all duration-200",
+                                responseStyle === 'normal'
+                                    ? "bg-blue-500 hover:bg-blue-600 text-white shadow-sm"
+                                    : "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-foreground border-2"
+                            )}
+                            onClick={() => setResponseStyle('normal')}
+                        >
+                            Normal
+                        </Button>
+                        <Button
+                            variant={responseStyle === 'detailed' ? 'default' : 'outline'}
+                            size="sm"
+                            className={cn(
+                                "h-8 text-xs transition-all duration-200",
+                                responseStyle === 'detailed'
+                                    ? "bg-purple-500 hover:bg-purple-600 text-white shadow-sm"
+                                    : "hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 text-foreground border-2"
+                            )}
+                            onClick={() => setResponseStyle('detailed')}
+                        >
+                            Detailed
+                        </Button>
+                    </div>
+                    <div className="text-xs text-muted-foreground px-1">
+                        {responseStyle === 'concise' && 'Very short, direct responses'}
+                        {responseStyle === 'normal' && 'Balanced, well-structured responses'}
+                        {responseStyle === 'detailed' && 'Comprehensive, thorough explanations'}
+                    </div>
                 </div>
             )}
 
@@ -247,28 +306,6 @@ export function SettingsFormContents({
                     </div>
                 </div>
             )}
-
-            {/* Current Configuration */}
-            <div className="space-y-2 pt-2 border-t border-border">
-                <div className="text-xs font-medium text-muted-foreground">Current Setup</div>
-                <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs text-foreground">Provider:</span>
-                        <Badge variant="secondary" className="text-xs">
-                            {getCurrentProvider()}
-                        </Badge>
-                    </div>              <div className="flex items-center justify-between">
-                        <span className="text-xs text-foreground">Model:</span>
-                        <Badge variant="outline" className="text-xs max-w-32 px-2 py-1">
-                            <ScrollingText
-                                text={getCurrentModel()}
-                                className="text-xs"
-                                maxWidth={112}
-                            />
-                        </Badge>
-                    </div>
-                </div>
-            </div>
         </div>
     )
 }
@@ -280,10 +317,12 @@ export function SettingsTooltip({
     setProvider,
     selectedModel,
     setSelectedModel,
+    responseStyle,
+    setResponseStyle,
     children,
     messageActionsAlwaysVisible = false,
     setMessageActionsAlwaysVisible,
-}: SettingsTooltipProps) {    const [isOpen, setIsOpen] = React.useState(false)
+}: SettingsTooltipProps) {const [isOpen, setIsOpen] = React.useState(false)
     const [isModelSelectorOpen, setIsModelSelectorOpen] = React.useState(false)
     const timeoutRef = React.useRef<NodeJS.Timeout | null>(null)
 
@@ -350,14 +389,15 @@ export function SettingsTooltip({
                             }
                         }, 100)
                     }
-                }}
-            ><SettingsFormContents
+                }}            ><SettingsFormContents
                     mode={mode}
                     setMode={setMode}
                     provider={provider}
                     setProvider={setProvider}
                     selectedModel={selectedModel}
                     setSelectedModel={setSelectedModel}
+                    responseStyle={responseStyle}
+                    setResponseStyle={setResponseStyle}
                     messageActionsAlwaysVisible={messageActionsAlwaysVisible}
                     setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}
                     getCurrentProvider={getCurrentProvider}

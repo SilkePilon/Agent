@@ -40,6 +40,8 @@ interface MessageInputBaseProps
   setProvider?: (provider: 'openrouter' | 'google') => void
   selectedModel?: string
   setSelectedModel?: (model: string) => void
+  responseStyle?: 'concise' | 'normal' | 'detailed'
+  setResponseStyle?: (style: 'concise' | 'normal' | 'detailed') => void
   clearMessages?: () => void
   hasMessages?: boolean
   messageActionsAlwaysVisible?: boolean
@@ -521,6 +523,8 @@ export function MessageInput({
               setProvider={props.setProvider}
               selectedModel={props.selectedModel}
               setSelectedModel={props.setSelectedModel}
+              responseStyle={props.responseStyle}
+              setResponseStyle={props.setResponseStyle}
               // Pass the model-related props to SettingsTooltip as well
               availableModels={availableModels}
               isLoadingModels={isLoadingModels}
@@ -530,7 +534,7 @@ export function MessageInput({
               getCurrentProvider={getCurrentProvider}
               getCurrentModel={getCurrentModel}
               messageActionsAlwaysVisible={messageActionsAlwaysVisible}
-              setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}            >
+              setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}>
               <Button
                 type="button"
                 size="icon"
