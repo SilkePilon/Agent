@@ -110,8 +110,7 @@ export function ChatInput({
         mass: 0.8
       }}
     >{/* Agent/Chat Mode Indicator - Positioned at top center of entire card */}
-      <AnimatePresence>        {isFocused && mode === 'agent' && (
-          <motion.div 
+      <AnimatePresence>        {isFocused && mode === 'agent' && (          <motion.div 
             className="absolute left-1/2 transform -translate-x-1/2 -top-10 z-0 flex items-center gap-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-md shadow-sm pointer-events-none"
             initial={{ opacity: 0, y: 80 }}
             animate={{ 
@@ -137,15 +136,14 @@ export function ChatInput({
           >
             <Bot className="h-3 w-3" />
             <span className="font-medium">Agent Mode Active</span>
-            {responseStyle && (
+            {responseStyle && hasMessages && (
               <>
                 <span className="text-blue-200">•</span>
                 <span className="font-medium capitalize">{responseStyle} responses</span>
               </>
             )}
           </motion.div>
-        )}        {isFocused && mode === 'chat' && (
-          <motion.div 
+        )}        {isFocused && mode === 'chat' && (          <motion.div 
             className="absolute left-1/2 transform -translate-x-1/2 -top-10 z-0 flex items-center gap-2 px-3 py-1 bg-green-500 text-white text-xs rounded-md shadow-sm pointer-events-none"
             initial={{ opacity: 0, y: 80 }}
             animate={{ 
@@ -171,7 +169,7 @@ export function ChatInput({
           >
             <MessageCircle strokeWidth={3} className="h-3 w-3" />
             <span className="font-medium">Chat Mode Active</span>
-            {responseStyle && (
+            {responseStyle && hasMessages && (
               <>
                 <span className="text-green-200">•</span>
                 <span className="font-medium capitalize">{responseStyle} responses</span>
