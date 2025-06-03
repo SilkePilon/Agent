@@ -45,7 +45,19 @@ export default function Home() {
         retryAttemptRef.current = false;
       }, 5000);
     }
-  }, []);  // Chat hook with error handling
+  }, []);  // Chat history management
+  const chatHistory = useChatHistory({
+    messages: [], // Initialize with empty array, will be updated after useChat
+    setMessages: (newMessages) => {}, // Placeholder, will be updated after useChat
+    mode,
+    modelId: selectedModel,
+    modelProvider: provider
+  })
+  
+  // Reference to save function for onFinish callback
+  const saveSessionRef = useRef<() => void>(() => {})
+
+  // Chat hook with error handling
   const { messages, input, handleInputChange, handleSubmit, isLoading, stop, append, setMessages } = useChat({
     body: { 
       mode,
@@ -74,25 +86,32 @@ export default function Home() {
       
       // Store model information
       // We'll add this to messages directly based on current provider/model
+    },
+    onFinish: () => {
+      // Force save when AI response completes
+      saveSessionRef.current();
     }
   });
-  // Chat history management
-  const chatHistory = useChatHistory({
+  
+  // Update chat history with actual messages and setMessages
+  const actualChatHistory = useChatHistory({
     messages,
     setMessages: (newMessages) => setMessages(newMessages),
     mode,
     modelId: selectedModel,
     modelProvider: provider
   })
+  
+  // Update the save reference
+  saveSessionRef.current = actualChatHistory.saveCurrentSession
   const enhancedHandleSubmit = useCallback((e?: { preventDefault?: () => void }, options?: { experimental_attachments?: FileList }) => {
     return handleSubmit(e, options);
-  }, [handleSubmit]);
-    // Function to clear all messages
+  }, [handleSubmit]);    // Function to clear all messages
   const clearMessages = useCallback(() => {
     setMessages([]);
     setMessageTimestamps({});
-    chatHistory.newSession();
-  }, [setMessages, chatHistory]);
+    actualChatHistory.newSession();
+  }, [setMessages, actualChatHistory]);
     // Track model information for UI display
   // Handle feedback submission
   const handleSubmitFeedback = useCallback(async (
@@ -199,17 +218,16 @@ export default function Home() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            transition={{ delay: 0.2 }}
-          ><ChatHistory
+            transition={{ delay: 0.2 }}          ><ChatHistory
               onLoadSession={(session) => {
                 setMessageTimestamps({})
-                chatHistory.loadSession(session)
+                actualChatHistory.loadSession(session)
               }}
               onNewChat={() => {
                 setMessageTimestamps({})
-                chatHistory.newSession()
+                actualChatHistory.newSession()
               }}
-              currentSessionId={chatHistory.currentSessionId}
+              currentSessionId={actualChatHistory.currentSessionId}
             />
           </motion.div>
         )}
