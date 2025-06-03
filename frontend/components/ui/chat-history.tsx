@@ -59,6 +59,7 @@ import {
   deleteChatSession,
   updateSessionTitle,
   regenerateSessionTitle,
+  clearAllChatHistory,
   type ChatSession,
   type ExtendedMessage
 } from "@/lib/chat-history"
@@ -132,15 +133,20 @@ export function ChatHistory({
     setEditingSessionId(null)
     setEditTitle("")
   }, [])
-
   const handleLoadSession = useCallback((session: ChatSession) => {
     onLoadSession(session)
     setIsOpen(false)
   }, [onLoadSession])
+
   const handleNewChat = useCallback(() => {
     onNewChat()
     setIsOpen(false)
   }, [onNewChat])
+
+  const handleClearAll = useCallback(() => {
+    clearAllChatHistory()
+    refreshSessions()
+  }, [refreshSessions])
 
   const toggleFilePanel = useCallback((sessionId: string) => {
     setOpenFilePanels(prev => ({
@@ -624,12 +630,25 @@ export function ChatHistory({
                   {searchQuery ? "Try adjusting your search or filters" : "Start a conversation to see your chat history here"}
                 </p>
               </div>
-            )}
-          </div>
+            )}          </div>
         </div>
       </ScrollArea>
-    </>
-  ), [
+      
+      {/* Clear All Button */}
+      {sessions.length > 0 && (
+        <div className="px-6 py-4 border-t">
+          <Button
+            onClick={handleClearAll}
+            variant="outline"
+            size="sm"
+            className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="size-4 mr-2" />
+            Clear All
+          </Button>
+        </div>
+      )}
+    </>  ), [
     filteredSessions,
     sessions.length,
     searchQuery,
@@ -646,6 +665,7 @@ export function ChatHistory({
     handleCancelEdit,
     handleDeleteSession,
     handleRegenerateTitle,
+    handleClearAll,
     renderProviderIcon,
     formatTime,
     setFilterMode,
