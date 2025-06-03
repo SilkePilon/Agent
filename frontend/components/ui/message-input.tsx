@@ -359,8 +359,7 @@ export function MessageInput({
             )}
             style={{
               paddingRight: `${buttonAreaWidth}px`
-            }}
-            {...(props.allowAttachments
+            }}            {...(props.allowAttachments
               ? omit(props, [
                   "allowAttachments", 
                   "files", 
@@ -371,6 +370,8 @@ export function MessageInput({
                   "setProvider", 
                   "selectedModel", 
                   "setSelectedModel",
+                  "responseStyle",
+                  "setResponseStyle",
                   "clearMessages",
                   "hasMessages"
                 ])
@@ -382,9 +383,11 @@ export function MessageInput({
                   "setProvider", 
                   "selectedModel", 
                   "setSelectedModel",
+                  "responseStyle",
+                  "setResponseStyle",
                   "clearMessages",
                   "hasMessages"
-                ]))}
+                ] as any)) as any}
           />
 
           {/* Animated placeholder overlay - positioned above textarea */}
