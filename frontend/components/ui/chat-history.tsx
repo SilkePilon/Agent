@@ -598,23 +598,24 @@ export function ChatHistory({
                                 >
                                   <div className="overflow-y-auto max-h-24">
                                     {session.messages.map(msg => {
-                                      const files = extractFileReferences(msg);
-                                      return files.map(file => (<motion.div 
+                                      const files = extractFileReferences(msg);                                      return files.map(file => (<motion.div 
                                         key={file.id} 
                                         initial={{ x: -10, opacity: 0 }}
                                         animate={{ x: 0, opacity: 1 }}
                                         transition={{ delay: 0.1, duration: 0.2 }}
-                                        className="flex items-center justify-between py-1 px-2 bg-muted/30 rounded text-xs"
+                                        className="flex items-center justify-between py-1 px-2 bg-muted/30 rounded text-xs gap-2"
                                       >
-                                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                                          {getFileIcon(file.type, file.name)}
-                                          <span className="truncate" title={file.name}>{file.name}</span>
+                                        <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
+                                          <div className="shrink-0">
+                                            {getFileIcon(file.type, file.name)}
+                                          </div>
+                                          <span className="truncate text-xs" title={file.name}>{file.name}</span>
                                           {file.url && (
-                                            <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                                            <Badge variant="secondary" className="text-[10px] px-1 py-0 shrink-0">
                                               Downloadable
                                             </Badge>
                                           )}
-                                        </div>                                        <Button
+                                        </div><Button
                                           variant="ghost"
                                           size="sm"
                                           className="h-6 w-6 p-0 shrink-0 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 border border-border rounded-sm"
