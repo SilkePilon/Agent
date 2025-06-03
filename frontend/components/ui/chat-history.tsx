@@ -92,14 +92,19 @@ export function ChatHistory({
   const [searchQuery, setSearchQuery] = useState("")
   const [filterMode, setFilterMode] = useState<'all' | 'chat' | 'agent'>('all')
   const [openFilePanels, setOpenFilePanels] = useState<Record<string, boolean>>({});
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null)
+  const [isClearingAll, setIsClearingAll] = useState(false)
   const isMobile = useIsMobile()
 
   const refreshSessions = useCallback(() => {
     setSessions(getChatSessions())
   }, [])
-
-  const handleDeleteSession = useCallback((sessionId: string) => {
+  const handleDeleteSession = useCallback(async (sessionId: string) => {
+    setDeletingSessionId(sessionId)
+    // Wait for animation to complete before actually deleting
+    await new Promise(resolve => setTimeout(resolve, 300))
     deleteChatSession(sessionId)
+    setDeletingSessionId(null)
     refreshSessions()
   }, [refreshSessions])
 
@@ -142,9 +147,12 @@ export function ChatHistory({
     onNewChat()
     setIsOpen(false)
   }, [onNewChat])
-
-  const handleClearAll = useCallback(() => {
+  const handleClearAll = useCallback(async () => {
+    setIsClearingAll(true)
+    // Wait for animation to complete before actually clearing
+    await new Promise(resolve => setTimeout(resolve, 500))
     clearAllChatHistory()
+    setIsClearingAll(false)
     refreshSessions()
   }, [refreshSessions])
 
@@ -405,17 +413,21 @@ export function ChatHistory({
                 Agent
               </Button>
             </div>
-          </div>
-
-          {/* Chat Sessions */}
-          <div className="space-y-6">
+          </div>          {/* Chat Sessions */}
+          <motion.div 
+            className="space-y-6"
+            animate={{
+              opacity: isClearingAll ? 0 : 1,
+              x: isClearingAll ? -100 : 0
+            }}
+            transition={{ duration: 0.5 }}
+          >
             {Object.entries(groupedSessions).map(([groupName, groupSessions]) => (
               <div key={groupName}>
                 <h3 className="text-xs font-medium text-muted-foreground mb-3 px-2">
                   {groupName}
                 </h3>
-                <div className="space-y-1">
-                  {groupSessions.map((session) => (<motion.div
+                <div className="space-y-1">                  {groupSessions.map((session) => (<motion.div
                     key={session.id}
                     initial={{
                       opacity: 0,
@@ -424,11 +436,12 @@ export function ChatHistory({
                         : { x: -20 })
                     }}
                     animate={{
-                      opacity: 1,
+                      opacity: (deletingSessionId === session.id || isClearingAll) ? 0 : 1,
                       ...(isMobile
-                        ? { y: 0 }
-                        : { x: 0 })
+                        ? { y: (deletingSessionId === session.id || isClearingAll) ? -20 : 0 }
+                        : { x: (deletingSessionId === session.id || isClearingAll) ? -100 : 0 })
                     }}
+                    transition={{ duration: deletingSessionId === session.id ? 0.3 : isClearingAll ? 0.5 : 0.3 }}
                     className={cn(
                       "group relative rounded-lg border-2 p-3 cursor-pointer transition-all duration-200",
                       "hover:bg-accent/50 hover:border-accent-foreground/20",
@@ -636,13 +649,12 @@ export function ChatHistory({
                   {searchQuery ? "No chats found" : "No chat history yet"}
                 </p>
                 <p className="text-xs text-muted-foreground/70">
-                  {searchQuery ? "Try adjusting your search or filters" : "Start a conversation to see your chat history here"}
-                </p>
-              </div>
-            )}          </div>
+                  {searchQuery ? "Try adjusting your search or filters" : "Start a conversation to see your chat history here"}                </p>
+              </div>            )}          </motion.div>
         </div>
       </ScrollArea>
-        {/* Clear All Button */}
+      
+      {/* Clear All Button */}
       {sessions.length > 0 && (
         <div className="px-6 py-4 border-t">
           <Button
@@ -656,16 +668,18 @@ export function ChatHistory({
           </Button>
         </div>
       )}
-    </>  ), [
+    </>
+  ), [
     filteredSessions,
     sessions.length,
     searchQuery,
     filterMode,
-    groupedSessions,
-    editingSessionId,
+    groupedSessions,    editingSessionId,
     editTitle,
     currentSessionId,
     regeneratingTitleId,
+    deletingSessionId,
+    isClearingAll,
     handleNewChat,
     handleLoadSession,
     handleStartEdit,
