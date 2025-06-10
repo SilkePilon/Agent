@@ -1,19 +1,30 @@
-import { streamText } from 'ai'
-import { google } from '@ai-sdk/google'
+import { streamText } from "ai";
+import { google } from "@ai-sdk/google";
+import { getAuth } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
+import { NextRequest } from "next/server";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const auth = getAuth(req);
+  if (!auth.userId) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const { conversation } = await req.json()
+    const { conversation } = await req.json();
 
     if (!conversation) {
-      return Response.json({ error: 'Conversation is required' }, { status: 400 })
+      return Response.json(
+        { error: "Conversation is required" },
+        { status: 400 }
+      );
     }
 
     const result = await streamText({
-      model: google('gemini-2.0-flash-exp'),
+      model: google("gemini-2.0-flash-exp"),
       messages: [
         {
-          role: 'system',
+          role: "system",
           content: `You are an AI assistant that generates concise, descriptive titles for chat conversations. 
           
           Rules:
@@ -29,33 +40,36 @@ export async function POST(req: Request) {
           - "JavaScript Array Methods"
           - "Travel Planning for Europe"
           - "Machine Learning Basics"
-          - "Bug Fix: Login Authentication"`
+          - "Bug Fix: Login Authentication"`,
         },
         {
-          role: 'user',
-          content: `Generate a title for this conversation:\n\n${conversation}`
-        }
+          role: "user",
+          content: `Generate a title for this conversation:\n\n${conversation}`,
+        },
       ],
       maxTokens: 50,
       temperature: 0.3,
-    })
+    });
 
     // Get the generated text
-    let title = ''
+    let title = "";
     for await (const chunk of result.textStream) {
-      title += chunk
+      title += chunk;
     }
 
     // Clean up the title
-    title = title.trim().replace(/['"]/g, '').slice(0, 50)
-    
+    title = title.trim().replace(/['"]/g, "").slice(0, 50);
+
     if (!title) {
-      title = 'New Chat'
+      title = "New Chat";
     }
 
-    return Response.json({ title })
+    return Response.json({ title });
   } catch (error) {
-    console.error('Error generating title:', error)
-    return Response.json({ error: 'Failed to generate title' }, { status: 500 })
+    console.error("Error generating title:", error);
+    return Response.json(
+      { error: "Failed to generate title" },
+      { status: 500 }
+    );
   }
 }
