@@ -14,13 +14,14 @@ import {
 } from "@clerk/nextjs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings, CreditCard, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Card,
@@ -31,7 +32,13 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, XCircle } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 import { ChatMessages } from "@/components/ui/chat-messages";
 import { ChatInput } from "@/components/ui/chat-input";
@@ -63,28 +70,34 @@ export default function Home() {
   >({});
 
   const { user } = useUser();
-  const { has } = useAuth();
+  const { has, isSignedIn, isLoaded } = useAuth();
   const [remainingMessages, setRemainingMessages] = useState<number | null>(
     null
   );
   const [dailyLimit, setDailyLimit] = useState<number>(25);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
   const [isProfileHovered, setIsProfileHovered] = useState(false);
 
   // Fetch message limit
   const fetchLimit = useCallback(async () => {
-    const res = await fetch("/api/message-limit");
-    if (res.ok) {
-      const data = await res.json();
-      setRemainingMessages(data.remaining);
-      setDailyLimit(data.dailyLimit ?? 25);
+    if (isSignedIn) {
+      const res = await fetch("/api/message-limit");
+      if (res.ok) {
+        const data = await res.json();
+        setRemainingMessages(data.remaining);
+        setDailyLimit(data.dailyLimit ?? 25);
+      }
     }
-  }, []);
+  }, [isSignedIn]);
 
   useEffect(() => {
-    fetchLimit();
-  }, [fetchLimit]);
+    if (user?.id) {
+      // Only fetch if a user is signed in
+      fetchLimit();
+    }
+  }, [fetchLimit, user?.id]);
 
   // Custom error handler for the chat
   const handleChatError = useCallback(async (error: Error) => {
@@ -252,234 +265,311 @@ export default function Home() {
     [messages, setMessages, append]
   );
 
+  // Function to handle account deletion
+  const handleDeleteAccount = useCallback(async () => {
+    setSubscribing(true); // Indicate loading state
+    try {
+      const response = await fetch("/api/delete-account", {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        // Account deleted successfully, redirect to sign-up or home
+        window.location.href = "/sign-up"; // Or home page
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to delete account:", errorData.error);
+        alert(
+          `Failed to delete account: ${errorData.error || "Unknown error"}`
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      alert("An unexpected error occurred while deleting your account.");
+    } finally {
+      setSubscribing(false);
+      setShowDeleteAccount(false); // Close the modal
+    }
+  }, []);
+
+  // Function to handle managing subscription
+  const handleManageSubscription = useCallback(async () => {
+    setSubscribing(true); // Indicate loading state
+    try {
+      const response = await fetch("/api/create-billing-portal", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        window.location.href = data.url;
+      } else {
+        const errorData = await response.json();
+        console.error(
+          "Failed to create billing portal session:",
+          errorData.error
+        );
+        alert(
+          `Failed to manage subscription: ${errorData.error || "Unknown error"}`
+        );
+      }
+    } catch (error) {
+      console.error("Error creating billing portal session:", error);
+      alert(
+        "An unexpected error occurred while trying to manage your subscription."
+      );
+    } finally {
+      setSubscribing(false);
+    }
+  }, []);
+
   return (
     <>
-      <SignedIn>
-        {/* Profile badge and expanded options at top right */}
-        <motion.div
-          className="fixed top-4 right-4 z-50 flex flex-col items-end gap-2"
-          onMouseEnter={() => setIsProfileHovered(true)}
-          onMouseLeave={() => setIsProfileHovered(false)}
-        >
-          <div className="flex items-center gap-2 bg-white/80 dark:bg-gray-900/80 border-2 rounded-md shadow-xs px-3 py-1 backdrop-blur-sm">
-            <Avatar className="size-7 rounded-md border-2 border-border">
-              <AvatarImage
-                src={user?.imageUrl}
-                alt={user?.fullName || user?.username || "User"}
-                className="rounded-md"
-              />
-              <AvatarFallback className="rounded-md">
-                {user?.firstName?.[0]}
-                {user?.lastName?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            <span className="font-medium text-sm flex items-center gap-1">
-              {user?.fullName || user?.username || "User"}
-              {has && has({ plan: "pro_user" }) ? (
-                <Badge
-                  variant="outline"
-                  className="border-2 rounded-md text-green-700 border-green-400 bg-green-50 dark:text-green-300 dark:border-green-600 dark:bg-green-900/30"
-                >
-                  Pro
-                </Badge>
-              ) : (
-                <Badge
-                  variant="outline"
-                  className="border-2 rounded-md text-gray-700 border-gray-300 bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:bg-gray-900/30"
-                >
-                  Free
-                </Badge>
-              )}
-            </span>
-            {/* Message limit badge */}
-            <Badge
-              variant="outline"
-              className="border-2 rounded-md px-2 py-0.5 ml-1 text-xs font-medium bg-muted/60"
-            >
-              {remainingMessages === null
-                ? "..."
-                : `${remainingMessages}/${dailyLimit}`}
-            </Badge>
-            <SignOutButton>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-6 border-2 px-2"
-                title="Sign out"
-              >
-                Logout
-              </Button>
-            </SignOutButton>
-          </div>
-
-          <AnimatePresence>
-            {isProfileHovered && (
-              <motion.div
-                initial={{ opacity: 0, y: -10, height: 0 }}
-                animate={{ opacity: 1, y: 0, height: "auto" }}
-                exit={{ opacity: 0, y: -10, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex flex-col gap-1 w-full mt-1"
-              >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-6 border-2 px-2"
-                  onClick={() => alert("Delete Account clicked!")}
-                >
-                  <Trash2 className="w-3 h-3 mr-1" />
-                  Delete Account
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-6 border-2 px-2"
-                  onClick={() => alert("Cancel Subscription clicked!")}
-                >
-                  <XCircle className="w-3 h-3 mr-1" />
-                  Cancel Subscription
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Upgrade button below profile badge */}
-          {has && !has({ plan: "pro_user" }) && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 border-2 mt-1"
-              onClick={() => setShowUpgrade(true)}
-            >
-              Upgrade to Pro
-            </Button>
-          )}
-        </motion.div>
-        {/* Upgrade Modal */}
-        {showUpgrade && (
-          <Dialog open={showUpgrade} onOpenChange={setShowUpgrade}>
-            <DialogContent className="max-w-md z-[9999]">
-              <DialogHeader>
-                <DialogTitle>Upgrade your plan</DialogTitle>
-                <DialogDescription>
-                  Choose a plan and complete your payment securely.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-2">
-                <PricingTable />
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-        {/* Main content below */}
-        <motion.div
-          className="min-h-screen bg-white dark:bg-gray-950 flex flex-col relative"
-          layout
-        >
-          {/* Messages Container - appears and moves up when there are messages */}
-          <AnimatePresence>
-            {messages.length > 0 && (
-              <motion.div
-                className="flex-1 flex justify-center px-2 pt-8 pb-32 overflow-hidden message-container"
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -50 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 25,
-                  duration: 0.6,
-                }}
-              >
-                <div className="w-full max-w-3xl">
-                  {" "}
-                  <ChatMessages
-                    messages={messages.map((msg, index) => {
-                      // Convert AI SDK messages to our UI message format
-                      // Use incremental timestamps for better ordering
-                      const baseTime = new Date();
-                      const messageTime = new Date(
-                        baseTime.getTime() - (messages.length - index) * 1000
-                      );
-
-                      const uiMessage = {
-                        ...msg,
-                        createdAt: messageTimestamps[msg.id] || messageTime,
-                        modelId:
-                          msg.role === "assistant" ? selectedModel : undefined,
-                        modelProvider:
-                          msg.role === "assistant" ? provider : undefined,
-                      };
-                      return uiMessage as Message;
-                    })}
-                    stop={stop}
-                    mode={mode}
-                    setMode={setMode}
-                    onSubmitFeedback={handleSubmitFeedback}
-                    onRetryResponse={handleRetryResponse}
-                    setMessages={setMessages as any}
-                    submittedFeedback={submittedFeedback}
-                    onFeedbackSubmitted={handleFeedbackSubmitted}
-                    messageActionsAlwaysVisible={messageActionsAlwaysVisible}
-                    modelId={selectedModel}
-                    modelProvider={provider}
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          {/* Chat Input Container - moves from center to bottom */}
-          <div className="relative">
-            {messages.length > 0 && (
-              <motion.div
-                className="fixed left-4 bottom-32 sm:bottom-28 md:left-6 md:bottom-24 z-50"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ delay: 0.2 }}
-              >
-                <ChatHistory
-                  onLoadSession={(session) => {
-                    setMessageTimestamps({});
-                    actualChatHistory.loadSession(session);
-                  }}
-                  onNewChat={() => {
-                    setMessageTimestamps({});
-                    actualChatHistory.newSession();
-                  }}
-                  currentSessionId={actualChatHistory.currentSessionId}
-                />
-              </motion.div>
-            )}
-            <ChatInput
-              input={input}
-              handleInputChange={handleInputChange}
-              handleSubmit={enhancedHandleSubmit}
-              isGenerating={isLoading}
-              stop={stop}
-              mode={mode}
-              setMode={setMode}
-              provider={provider}
-              setProvider={setProvider}
-              selectedModel={selectedModel}
-              setSelectedModel={setSelectedModel}
-              responseStyle={responseStyle}
-              setResponseStyle={setResponseStyle}
-              hasMessages={messages.length > 0}
-              isFocused={isFocused}
-              setIsFocused={setIsFocused}
-              clearMessages={clearMessages}
-              messageActionsAlwaysVisible={messageActionsAlwaysVisible}
-              setMessageActionsAlwaysVisible={setMessageActionsAlwaysVisible}
-            />
-          </div>
-        </motion.div>
-      </SignedIn>
-      <SignedOut>
+      {!isLoaded && (
         <div className="flex min-h-screen items-center justify-center bg-white dark:bg-gray-950">
-          <SignIn routing="hash" />
+          <p>Loading...</p>
         </div>
-      </SignedOut>
+      )}
+      {isLoaded && (
+        <>
+          <SignedIn>
+            {/* Profile badge and expanded options at top right */}
+            <motion.div className="fixed top-4 right-4 z-50 flex flex-col items-end gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <div
+                    className="relative flex cursor-pointer items-center space-x-2 rounded-md border-2 p-1 transition-colors duration-200 hover:bg-gray-100"
+                    onMouseEnter={() => setIsProfileHovered(true)}
+                    onMouseLeave={() => setIsProfileHovered(false)}
+                  >
+                    <Avatar className="h-8 w-8 rounded-md">
+                      <AvatarImage
+                        src={user?.imageUrl}
+                        alt={user?.fullName || "User Avatar"}
+                        className="rounded-md"
+                      />
+                      <AvatarFallback className="rounded-md">
+                        {user?.firstName?.charAt(0)}
+                        {user?.lastName?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <motion.div
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{
+                        width: isProfileHovered ? "auto" : 0,
+                        opacity: isProfileHovered ? 1 : 0,
+                      }}
+                      transition={{ duration: 0.2 }}
+                      className="flex items-center whitespace-nowrap overflow-hidden"
+                    >
+                      <span className="text-sm font-medium">
+                        {user?.fullName}
+                      </span>
+                      {remainingMessages !== null && (
+                        <Badge
+                          variant="secondary"
+                          className="ml-2 px-2 py-0.5 text-xs"
+                        >
+                          {remainingMessages}/{dailyLimit}
+                        </Badge>
+                      )}
+                    </motion.div>
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleManageSubscription}>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    <span>Manage Subscription</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setShowDeleteAccount(true)}
+                    className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    <span>Delete Account</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <SignOutButton>
+                      <div className="flex items-center w-full">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
+                      </div>
+                    </SignOutButton>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {/* Upgrade Modal */}
+              {showUpgrade && (
+                <Dialog open={showUpgrade} onOpenChange={setShowUpgrade}>
+                  <DialogContent className="max-w-md z-[9999]">
+                    <DialogHeader>
+                      <DialogTitle>Upgrade your plan</DialogTitle>
+                      <DialogDescription>
+                        Choose a plan and complete your payment securely.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-2">
+                      <PricingTable />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
+              {/* Delete Account Confirmation Modal */}
+              {showDeleteAccount && (
+                <Dialog
+                  open={showDeleteAccount}
+                  onOpenChange={setShowDeleteAccount}
+                >
+                  <DialogContent className="max-w-md z-[9999]">
+                    <DialogHeader>
+                      <DialogTitle>Are you absolutely sure?</DialogTitle>
+                      <DialogDescription>
+                        This action cannot be undone. This will permanently
+                        delete your account and remove your data from our
+                        servers.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowDeleteAccount(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={handleDeleteAccount}
+                      >
+                        Delete Account
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </motion.div>
+            {/* Main content below */}
+            <motion.div
+              className="min-h-screen bg-white dark:bg-gray-950 flex flex-col relative"
+              layout
+            >
+              {/* Messages Container - appears and moves up when there are messages */}
+              <AnimatePresence>
+                {messages.length > 0 && (
+                  <motion.div
+                    className="flex-1 flex justify-center px-2 pt-8 pb-32 overflow-hidden message-container"
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -50 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 25,
+                      duration: 0.6,
+                    }}
+                  >
+                    <div className="w-full max-w-3xl">
+                      {" "}
+                      <ChatMessages
+                        messages={messages.map((msg, index) => {
+                          // Convert AI SDK messages to our UI message format
+                          // Use incremental timestamps for better ordering
+                          const baseTime = new Date();
+                          const messageTime = new Date(
+                            baseTime.getTime() -
+                              (messages.length - index) * 1000
+                          );
+
+                          const uiMessage = {
+                            ...msg,
+                            createdAt: messageTimestamps[msg.id] || messageTime,
+                            modelId:
+                              msg.role === "assistant"
+                                ? selectedModel
+                                : undefined,
+                            modelProvider:
+                              msg.role === "assistant" ? provider : undefined,
+                          };
+                          return uiMessage as Message;
+                        })}
+                        stop={stop}
+                        mode={mode}
+                        setMode={setMode}
+                        onSubmitFeedback={handleSubmitFeedback}
+                        onRetryResponse={handleRetryResponse}
+                        setMessages={setMessages as any}
+                        submittedFeedback={submittedFeedback}
+                        onFeedbackSubmitted={handleFeedbackSubmitted}
+                        messageActionsAlwaysVisible={
+                          messageActionsAlwaysVisible
+                        }
+                        modelId={selectedModel}
+                        modelProvider={provider}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              {/* Chat Input Container - moves from center to bottom */}
+              <div className="relative">
+                {messages.length > 0 && (
+                  <motion.div
+                    className="fixed left-4 bottom-32 sm:bottom-28 md:left-6 md:bottom-24 z-50"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <ChatHistory
+                      onLoadSession={(session) => {
+                        setMessageTimestamps({});
+                        actualChatHistory.loadSession(session);
+                      }}
+                      onNewChat={() => {
+                        setMessageTimestamps({});
+                        actualChatHistory.newSession();
+                      }}
+                      currentSessionId={actualChatHistory.currentSessionId}
+                    />
+                  </motion.div>
+                )}
+                <ChatInput
+                  input={input}
+                  handleInputChange={handleInputChange}
+                  handleSubmit={enhancedHandleSubmit}
+                  isGenerating={isLoading}
+                  stop={stop}
+                  mode={mode}
+                  setMode={setMode}
+                  provider={provider}
+                  setProvider={setProvider}
+                  selectedModel={selectedModel}
+                  setSelectedModel={setSelectedModel}
+                  responseStyle={responseStyle}
+                  setResponseStyle={setResponseStyle}
+                  hasMessages={messages.length > 0}
+                  isFocused={isFocused}
+                  setIsFocused={setIsFocused}
+                  clearMessages={clearMessages}
+                  messageActionsAlwaysVisible={messageActionsAlwaysVisible}
+                  setMessageActionsAlwaysVisible={
+                    setMessageActionsAlwaysVisible
+                  }
+                />
+              </div>
+            </motion.div>
+          </SignedIn>
+          <SignedOut>
+            <div className="flex min-h-screen items-center justify-center bg-white dark:bg-gray-950">
+              <SignIn routing="hash" />
+            </div>
+          </SignedOut>
+        </>
+      )}
     </>
   );
 }
