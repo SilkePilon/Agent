@@ -20,7 +20,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Card,
@@ -299,88 +298,81 @@ export default function Home() {
           )}
         </div>
         {/* Upgrade Modal */}
-        <Dialog open={showUpgrade} onOpenChange={setShowUpgrade}>
-          <DialogContent className="max-w-md p-0 z-50">
-            <DialogHeader>
-              <DialogTitle>Upgrade your plan</DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col gap-4">
-              {/* Free Plan Card */}
-              <Card className="border-2 rounded-md">
-                <CardHead>
-                  <CardTitle className="flex items-center gap-2">
-                    Free
-                    <Badge variant="outline">25 messages/day</Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    Basic access for personal use.
-                  </CardDescription>
-                </CardHead>
-                <CardContent>
-                  <ul className="text-sm list-disc pl-4 text-muted-foreground">
-                    <li>25 messages per day</li>
-                    <li>Basic support</li>
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  {has && !has({ plan: "pro" }) ? (
-                    <Badge className="bg-muted text-muted-foreground">
-                      Current Plan
-                    </Badge>
-                  ) : (
-                    <Button variant="outline" size="sm" disabled>
-                      Current Plan
-                    </Button>
-                  )}
-                </CardFooter>
-              </Card>
-              {/* Pro Plan Card */}
-              <Card className="border-2 rounded-md">
-                <CardHead>
-                  <CardTitle className="flex items-center gap-2">
-                    Pro
-                    <Badge>50 messages/day</Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    For power users and professionals.
-                  </CardDescription>
-                </CardHead>
-                <CardContent>
-                  <ul className="text-sm list-disc pl-4 text-muted-foreground">
-                    <li>50 messages per day</li>
-                    <li>Priority support</li>
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  {has && has({ plan: "pro" }) ? (
-                    <Badge className="bg-muted text-muted-foreground">
-                      Current Plan
-                    </Badge>
-                  ) : (
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => {
-                        /* TODO: Wire up Clerk billing */
-                      }}
-                    >
-                      Subscribe
-                    </Button>
-                  )}
-                </CardFooter>
-              </Card>
-            </div>
-            <DialogClose asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2"
-              >
-                ×
-              </Button>
-            </DialogClose>
-          </DialogContent>
-        </Dialog>
+        {showUpgrade && (
+          <Dialog open={showUpgrade} onOpenChange={setShowUpgrade}>
+            <DialogContent className="max-w-md z-50">
+              <DialogHeader>
+                <DialogTitle>Upgrade your plan</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col gap-4">
+                {/* Free Plan Card */}
+                <Card className="border-2 rounded-md">
+                  <CardHead>
+                    <CardTitle className="flex items-center gap-2">
+                      Free
+                      <Badge variant="outline">25 messages/day</Badge>
+                    </CardTitle>
+                    <CardDescription>
+                      Basic access for personal use.
+                    </CardDescription>
+                  </CardHead>
+                  <CardContent>
+                    <ul className="text-sm list-disc pl-4 text-muted-foreground">
+                      <li>25 messages per day</li>
+                      <li>Basic support</li>
+                    </ul>
+                  </CardContent>
+                  <CardFooter>
+                    {has && !has({ plan: "pro" }) ? (
+                      <Badge className="bg-muted text-muted-foreground">
+                        Current Plan
+                      </Badge>
+                    ) : (
+                      <Button variant="outline" size="sm" disabled>
+                        Current Plan
+                      </Button>
+                    )}
+                  </CardFooter>
+                </Card>
+                {/* Pro Plan Card */}
+                <Card className="border-2 rounded-md">
+                  <CardHead>
+                    <CardTitle className="flex items-center gap-2">
+                      Pro
+                      <Badge>50 messages/day</Badge>
+                    </CardTitle>
+                    <CardDescription>
+                      For power users and professionals.
+                    </CardDescription>
+                  </CardHead>
+                  <CardContent>
+                    <ul className="text-sm list-disc pl-4 text-muted-foreground">
+                      <li>50 messages per day</li>
+                      <li>Priority support</li>
+                    </ul>
+                  </CardContent>
+                  <CardFooter>
+                    {has && has({ plan: "pro" }) ? (
+                      <Badge className="bg-muted text-muted-foreground">
+                        Current Plan
+                      </Badge>
+                    ) : (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => {
+                          /* TODO: Wire up Clerk billing */
+                        }}
+                      >
+                        Subscribe
+                      </Button>
+                    )}
+                  </CardFooter>
+                </Card>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
         {/* Main content below */}
         <motion.div
           className="min-h-screen bg-white dark:bg-gray-950 flex flex-col relative"
