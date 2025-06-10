@@ -39,6 +39,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 import { ChatMessages } from "@/components/ui/chat-messages";
 import { ChatInput } from "@/components/ui/chat-input";
@@ -338,11 +339,16 @@ export default function Home() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <div
-                    className="relative flex cursor-pointer items-center space-x-2 rounded-md border-2 p-1 transition-colors duration-200 hover:bg-gray-100"
+                    className="relative flex cursor-pointer items-center rounded-md border-2 p-1 transition-colors duration-200 hover:bg-gray-100"
                     onMouseEnter={() => setIsProfileHovered(true)}
                     onMouseLeave={() => setIsProfileHovered(false)}
                   >
-                    <Avatar className="h-8 w-8 rounded-md">
+                    <Avatar
+                      className={cn(
+                        "h-8 w-8 rounded-md",
+                        isProfileHovered && "mr-2"
+                      )}
+                    >
                       <AvatarImage
                         src={user?.imageUrl}
                         alt={user?.fullName || "User Avatar"}
@@ -365,14 +371,15 @@ export default function Home() {
                       <span className="text-sm font-medium">
                         {user?.fullName}
                       </span>
-                      {remainingMessages !== null && (
-                        <Badge
-                          variant="secondary"
-                          className="ml-2 px-2 py-0.5 text-xs"
-                        >
-                          {remainingMessages}/{dailyLimit}
-                        </Badge>
-                      )}
+                      {/* Display plan type and message counter */}
+                      <Badge
+                        variant="secondary"
+                        className="ml-2 px-2 py-0.5 text-xs"
+                      >
+                        {remainingMessages === null
+                          ? "Pro"
+                          : `Free ${remainingMessages}/${dailyLimit}`}
+                      </Badge>
                     </motion.div>
                   </div>
                 </DropdownMenuTrigger>
