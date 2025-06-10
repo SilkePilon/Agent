@@ -276,7 +276,7 @@ export default function Home() {
 
       if (response.ok) {
         // Account deleted successfully, redirect to sign-up or home
-        window.location.href = "/sign-up"; // Or home page
+        window.location.href = "/"; // Redirect to home page
       } else {
         const errorData = await response.json();
         console.error("Failed to delete account:", errorData.error);
