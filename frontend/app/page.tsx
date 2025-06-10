@@ -369,7 +369,7 @@ export default function Home() {
                       className="flex items-center whitespace-nowrap overflow-hidden"
                     >
                       <span className="text-sm font-medium">
-                        {user?.fullName}
+                        {user?.username || user?.fullName}
                       </span>
                       {/* Display plan type and message counter */}
                       <Badge
@@ -377,8 +377,8 @@ export default function Home() {
                         className="ml-2 px-2 py-0.5 text-xs"
                       >
                         {remainingMessages === null
-                          ? "Pro"
-                          : `Free ${remainingMessages}/${dailyLimit}`}
+                          ? `Pro ${remainingMessages}/${dailyLimit} Messages left`
+                          : `Free ${remainingMessages}/${dailyLimit} Messages left`}
                       </Badge>
                     </motion.div>
                   </div>

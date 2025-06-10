@@ -1,45 +1,45 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Bot, MessageCircle } from "lucide-react"
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Bot, MessageCircle } from "lucide-react";
 
-import { cn } from "@/lib/utils"
-import { MessageInput } from "@/components/ui/message-input"
+import { cn } from "@/lib/utils";
+import { MessageInput } from "@/components/ui/message-input";
 
 interface ChatInputProps {
   handleSubmit: (
     event?: { preventDefault?: () => void },
     options?: { experimental_attachments?: FileList }
-  ) => void
-  input: string
-  className?: string
-  handleInputChange: React.ChangeEventHandler<HTMLTextAreaElement>
-  isGenerating: boolean
-  stop?: () => void
-  transcribeAudio?: (blob: Blob) => Promise<string>
-  mode?: 'agent' | 'chat'
-  setMode?: (mode: 'agent' | 'chat') => void
-  provider?: 'openrouter' | 'google'
-  setProvider?: (provider: 'openrouter' | 'google') => void
-  selectedModel?: string
-  setSelectedModel?: (model: string) => void
-  responseStyle?: 'concise' | 'normal' | 'detailed'
-  setResponseStyle?: (style: 'concise' | 'normal' | 'detailed') => void
-  hasMessages?: boolean
-  isFocused?: boolean
-  setIsFocused?: (focused: boolean) => void
-  clearMessages?: () => void
-  messageActionsAlwaysVisible?: boolean
-  setMessageActionsAlwaysVisible?: (value: boolean) => void
+  ) => void;
+  input: string;
+  className?: string;
+  handleInputChange: React.ChangeEventHandler<HTMLTextAreaElement>;
+  isGenerating: boolean;
+  stop?: () => void;
+  transcribeAudio?: (blob: Blob) => Promise<string>;
+  mode?: "agent" | "chat";
+  setMode?: (mode: "agent" | "chat") => void;
+  provider?: "openrouter" | "google";
+  setProvider?: (provider: "openrouter" | "google") => void;
+  selectedModel?: string;
+  setSelectedModel?: (model: string) => void;
+  responseStyle?: "concise" | "normal" | "detailed";
+  setResponseStyle?: (style: "concise" | "normal" | "detailed") => void;
+  hasMessages?: boolean;
+  isFocused?: boolean;
+  setIsFocused?: (focused: boolean) => void;
+  clearMessages?: () => void;
+  messageActionsAlwaysVisible?: boolean;
+  setMessageActionsAlwaysVisible?: (value: boolean) => void;
 }
 
 function createFileList(files: File[] | FileList): FileList {
-  const dataTransfer = new DataTransfer()
+  const dataTransfer = new DataTransfer();
   for (const file of Array.from(files)) {
-    dataTransfer.items.add(file)
+    dataTransfer.items.add(file);
   }
-  return dataTransfer.files
+  return dataTransfer.files;
 }
 
 export function ChatInput({
@@ -65,33 +65,34 @@ export function ChatInput({
   messageActionsAlwaysVisible = false,
   setMessageActionsAlwaysVisible,
 }: ChatInputProps) {
-  const [files, setFiles] = useState<File[] | null>(null)
-  const [inputHeight, setInputHeight] = useState<number>(56) // Default height for single line
-  const formRef = useRef<HTMLFormElement>(null)
-  
+  const [files, setFiles] = useState<File[] | null>(null);
+  const [inputHeight, setInputHeight] = useState<number>(56); // Default height for single line
+  const formRef = useRef<HTMLFormElement>(null);
+
   // Track the height of the input form for animations
   useEffect(() => {
     if (formRef.current) {
-      const resizeObserver = new ResizeObserver(entries => {
+      const resizeObserver = new ResizeObserver((entries) => {
         for (const entry of entries) {
-          setInputHeight(entry.target.scrollHeight)
+          setInputHeight(entry.target.scrollHeight);
         }
-      })
-      
-      resizeObserver.observe(formRef.current)
-      return () => resizeObserver.disconnect()
+      });
+
+      resizeObserver.observe(formRef.current);
+      return () => resizeObserver.disconnect();
     }
-  }, [])
-  
+  }, []);
+
   const onSubmit = (event: React.FormEvent) => {
     if (!files) {
-      handleSubmit(event)
-      return
-    }    const fileList = createFileList(files)
-    handleSubmit(event, { experimental_attachments: fileList })
-    setFiles(null)
-  }
-    return (
+      handleSubmit(event);
+      return;
+    }
+    const fileList = createFileList(files);
+    handleSubmit(event, { experimental_attachments: fileList });
+    setFiles(null);
+  };
+  return (
     <motion.div
       className="flex flex-col w-full fixed left-1/2"
       initial={false}
@@ -103,81 +104,82 @@ export function ChatInput({
         width: "calc(100% - 32px)",
         maxWidth: hasMessages ? "768px" : "512px",
       }}
-      transition={{ 
-        type: "spring", 
-        stiffness: 300, 
+      transition={{
+        type: "spring",
+        stiffness: 300,
         damping: 35,
-        mass: 0.8
+        mass: 0.8,
       }}
-    >{/* Agent/Chat Mode Indicator - Positioned at top center of entire card */}
-      <AnimatePresence>        {isFocused && mode === 'agent' && (          <motion.div 
+    >
+      {/* Agent/Chat Mode Indicator - Positioned at top center of entire card */}
+      <AnimatePresence>
+        {" "}
+        {isFocused && mode === "agent" && (
+          <motion.div
             className="absolute left-1/2 transform -translate-x-1/2 -top-10 z-0 flex items-center gap-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-md shadow-sm pointer-events-none"
             initial={{ opacity: 0, y: 80 }}
-            animate={{ 
-              opacity: 1, 
+            animate={{
+              opacity: 1,
               y: 0,
-              transition: { 
-                type: "spring", 
-                stiffness: 300, 
+              transition: {
+                type: "spring",
+                stiffness: 300,
                 damping: 30,
-                duration: 1.2
-              }
+                duration: 1.2,
+              },
             }}
-            exit={{ 
-              opacity: 0, 
+            exit={{
+              opacity: 0,
               y: 80,
-              transition: { 
-                type: "spring", 
-                stiffness: 250, 
+              transition: {
+                type: "spring",
+                stiffness: 250,
                 damping: 35,
-                duration: 1.8
-              }
+                duration: 1.8,
+              },
             }}
           >
             <Bot className="h-3 w-3" />
             <span className="font-medium">Agent Mode Active</span>
-            {responseStyle && hasMessages && (
-              <>
-                <span className="text-blue-200">•</span>
-                <span className="font-medium capitalize">{responseStyle} responses</span>
-              </>
-            )}
           </motion.div>
-        )}        {isFocused && mode === 'chat' && (          <motion.div 
+        )}{" "}
+        {isFocused && mode === "chat" && (
+          <motion.div
             className="absolute left-1/2 transform -translate-x-1/2 -top-10 z-0 flex items-center gap-2 px-3 py-1 bg-green-500 text-white text-xs rounded-md shadow-sm pointer-events-none"
             initial={{ opacity: 0, y: 80 }}
-            animate={{ 
-              opacity: 1, 
+            animate={{
+              opacity: 1,
               y: 0,
-              transition: { 
-                type: "spring", 
-                stiffness: 300, 
+              transition: {
+                type: "spring",
+                stiffness: 300,
                 damping: 30,
-                duration: 1.2
-              }
+                duration: 1.2,
+              },
             }}
-            exit={{ 
-              opacity: 0, 
+            exit={{
+              opacity: 0,
               y: 80,
-              transition: { 
-                type: "spring", 
-                stiffness: 250, 
+              transition: {
+                type: "spring",
+                stiffness: 250,
                 damping: 35,
-                duration: 1.8
-              }
+                duration: 1.8,
+              },
             }}
           >
             <MessageCircle strokeWidth={3} className="h-3 w-3" />
             <span className="font-medium">Chat Mode Active</span>
-            {responseStyle && hasMessages && (
-              <>
-                <span className="text-green-200">•</span>
-                <span className="font-medium capitalize">{responseStyle} responses</span>
-              </>
-            )}
           </motion.div>
         )}
-      </AnimatePresence>      <form onSubmit={onSubmit} className="relative z-10 transition-all duration-300 ease-out" ref={formRef}>        <MessageInput
+      </AnimatePresence>{" "}
+      <form
+        onSubmit={onSubmit}
+        className="relative z-10 transition-all duration-300 ease-out"
+        ref={formRef}
+      >
+        {" "}
+        <MessageInput
           value={input}
           onChange={handleInputChange}
           allowAttachments
@@ -203,5 +205,5 @@ export function ChatInput({
         />
       </form>
     </motion.div>
-  )
+  );
 }
