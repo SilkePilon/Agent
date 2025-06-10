@@ -31,6 +31,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Trash2, XCircle } from "lucide-react";
 
 import { ChatMessages } from "@/components/ui/chat-messages";
 import { ChatInput } from "@/components/ui/chat-input";
@@ -69,6 +70,7 @@ export default function Home() {
   const [dailyLimit, setDailyLimit] = useState<number>(25);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
+  const [isProfileHovered, setIsProfileHovered] = useState(false);
 
   // Fetch message limit
   const fetchLimit = useCallback(async () => {
@@ -253,10 +255,14 @@ export default function Home() {
   return (
     <>
       <SignedIn>
-        {/* Profile badge at top right */}
-        <div className="fixed top-4 right-4 z-50 flex flex-col items-end gap-2">
+        {/* Profile badge and expanded options at top right */}
+        <motion.div
+          className="fixed top-4 right-4 z-50 flex flex-col items-end gap-2"
+          onMouseEnter={() => setIsProfileHovered(true)}
+          onMouseLeave={() => setIsProfileHovered(false)}
+        >
           <div className="flex items-center gap-2 bg-white/80 dark:bg-gray-900/80 border-2 rounded-md shadow-xs px-3 py-1 backdrop-blur-sm">
-            <Avatar className="size-7 rounded-md">
+            <Avatar className="size-7 rounded-md border-2 border-border">
               <AvatarImage
                 src={user?.imageUrl}
                 alt={user?.fullName || user?.username || "User"}
@@ -272,36 +278,71 @@ export default function Home() {
               {has && has({ plan: "pro_user" }) ? (
                 <Badge
                   variant="outline"
-                  className="text-green-700 border-green-400 bg-green-50 dark:text-green-300 dark:border-green-600 dark:bg-green-900/30"
+                  className="border-2 rounded-md text-green-700 border-green-400 bg-green-50 dark:text-green-300 dark:border-green-600 dark:bg-green-900/30"
                 >
                   Pro
                 </Badge>
               ) : (
                 <Badge
                   variant="outline"
-                  className="text-gray-700 border-gray-300 bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:bg-gray-900/30"
+                  className="border-2 rounded-md text-gray-700 border-gray-300 bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:bg-gray-900/30"
                 >
                   Free
                 </Badge>
               )}
             </span>
             {/* Message limit badge */}
-            <span className="text-xs px-2 py-0.5 rounded bg-muted/60 border border-border ml-1">
+            <Badge
+              variant="outline"
+              className="border-2 rounded-md px-2 py-0.5 ml-1 text-xs font-medium bg-muted/60"
+            >
               {remainingMessages === null
                 ? "..."
                 : `${remainingMessages}/${dailyLimit}`}
-            </span>
+            </Badge>
             <SignOutButton>
               <Button
                 variant="outline"
-                size="icon"
-                className="h-8 w-8 border-2"
+                size="sm"
+                className="h-6 border-2 px-2"
                 title="Sign out"
               >
-                <LogOut className="w-4 h-4" />
+                Logout
               </Button>
             </SignOutButton>
           </div>
+
+          <AnimatePresence>
+            {isProfileHovered && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -10, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex flex-col gap-1 w-full mt-1"
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 border-2 px-2"
+                  onClick={() => alert("Delete Account clicked!")}
+                >
+                  <Trash2 className="w-3 h-3 mr-1" />
+                  Delete Account
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 border-2 px-2"
+                  onClick={() => alert("Cancel Subscription clicked!")}
+                >
+                  <XCircle className="w-3 h-3 mr-1" />
+                  Cancel Subscription
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Upgrade button below profile badge */}
           {has && !has({ plan: "pro_user" }) && (
             <Button
@@ -313,7 +354,7 @@ export default function Home() {
               Upgrade to Pro
             </Button>
           )}
-        </div>
+        </motion.div>
         {/* Upgrade Modal */}
         {showUpgrade && (
           <Dialog open={showUpgrade} onOpenChange={setShowUpgrade}>
