@@ -12,6 +12,8 @@ export async function POST(req: NextRequest) {
     const returnUrl = req.headers.get("origin") || "http://localhost:3000";
 
     const clerk = await clerkClient();
+    console.log("Clerk object:", clerk);
+    console.log("Clerk billingPortal:", clerk.billingPortal);
     // @ts-expect-error: Property 'billingPortal' does not exist on type 'ClerkClient' - potential Clerk version or configuration issue.
     const billingPortalSession = await clerk.billingPortal.create({
       userId,
