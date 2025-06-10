@@ -67,6 +67,7 @@ export default function Home() {
   );
   const [dailyLimit, setDailyLimit] = useState<number>(25);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
 
   // Fetch message limit
   const fetchLimit = useCallback(async () => {
@@ -360,11 +361,34 @@ export default function Home() {
                       <Button
                         variant="default"
                         size="sm"
-                        onClick={() => {
-                          /* TODO: Wire up Clerk billing */
+                        disabled={subscribing}
+                        onClick={async () => {
+                          setSubscribing(true);
+                          try {
+                            const res = await fetch(
+                              "/api/create-billing-portal",
+                              { method: "POST" }
+                            );
+                            if (!res.ok)
+                              throw new Error(
+                                "Failed to create billing portal session"
+                              );
+                            const data = await res.json();
+                            if (data.url) {
+                              window.location.href = data.url;
+                            } else {
+                              throw new Error("No billing portal URL returned");
+                            }
+                          } catch (err) {
+                            alert(
+                              "Failed to open billing portal. Please try again later."
+                            );
+                          } finally {
+                            setSubscribing(false);
+                          }
                         }}
                       >
-                        Subscribe
+                        {subscribing ? "Redirecting..." : "Subscribe"}
                       </Button>
                     )}
                   </CardFooter>
