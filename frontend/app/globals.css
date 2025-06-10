@@ -244,3 +244,7 @@
     overflow-y: hidden !important;
   }
 }
+/* Clerk PricingTable checkout sheet z-index fix */
+.cl-pricingTableDrawer, .cl-drawer, .cl-modal, .cl-portal, .cl-sheet, .clerk, [class*="cl-"], [data-clerk-drawer], [data-clerk-modal] {
+  z-index: 99999 !important;
+}

@@ -267,8 +267,23 @@ export default function Home() {
                 {user?.lastName?.[0]}
               </AvatarFallback>
             </Avatar>
-            <span className="font-medium text-sm">
+            <span className="font-medium text-sm flex items-center gap-1">
               {user?.fullName || user?.username || "User"}
+              {has && has({ plan: "pro_user" }) ? (
+                <Badge
+                  variant="outline"
+                  className="text-green-700 border-green-400 bg-green-50 dark:text-green-300 dark:border-green-600 dark:bg-green-900/30"
+                >
+                  Pro
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="text-gray-700 border-gray-300 bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:bg-gray-900/30"
+                >
+                  Free
+                </Badge>
+              )}
             </span>
             {/* Message limit badge */}
             <span className="text-xs px-2 py-0.5 rounded bg-muted/60 border border-border ml-1">
@@ -288,7 +303,7 @@ export default function Home() {
             </SignOutButton>
           </div>
           {/* Upgrade button below profile badge */}
-          {has && !has({ plan: "pro" }) && (
+          {has && !has({ plan: "pro_user" }) && (
             <Button
               variant="outline"
               size="sm"
@@ -302,7 +317,7 @@ export default function Home() {
         {/* Upgrade Modal */}
         {showUpgrade && (
           <Dialog open={showUpgrade} onOpenChange={setShowUpgrade}>
-            <DialogContent className="max-w-md z-50">
+            <DialogContent className="max-w-md z-[9999]">
               <DialogHeader>
                 <DialogTitle>Upgrade your plan</DialogTitle>
                 <DialogDescription>
