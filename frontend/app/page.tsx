@@ -377,8 +377,8 @@ export default function Home() {
                         className="ml-2 px-2 py-0.5 text-xs"
                       >
                         {remainingMessages === null
-                          ? `Pro ${remainingMessages}/${dailyLimit} Messages left`
-                          : `Free ${remainingMessages}/${dailyLimit} Messages left`}
+                          ? `Pro | ${remainingMessages} Messages left`
+                          : `Free | ${remainingMessages} Messages left`}
                       </Badge>
                     </motion.div>
                   </div>
