@@ -79,7 +79,6 @@ export default function Home() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
-  const [isProfileHovered, setIsProfileHovered] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Fetch message limit
@@ -337,21 +336,17 @@ export default function Home() {
           <SignedIn>
             {/* Profile badge and expanded options at top right */}
             <motion.div className="fixed top-4 right-4 z-50 flex flex-col items-end gap-2">
-              <DropdownMenu onOpenChange={setIsDropdownOpen}>
+              <DropdownMenu
+                onOpenChange={(isOpen) => {
+                  setIsDropdownOpen(isOpen);
+                }}
+              >
                 <DropdownMenuTrigger asChild>
-                  <div
-                    className="relative flex cursor-pointer items-center rounded-md border-2 p-1 transition-colors duration-200 hover:bg-gray-100"
-                    onMouseEnter={() => setIsProfileHovered(true)}
-                    onMouseLeave={() => {
-                      if (!isDropdownOpen) {
-                        setIsProfileHovered(false);
-                      }
-                    }}
-                  >
+                  <div className="relative flex cursor-pointer items-center rounded-md border-2 p-1 transition-colors duration-200 hover:bg-gray-100">
                     <Avatar
                       className={cn(
                         "h-8 w-8 rounded-md",
-                        isProfileHovered && "mr-2"
+                        isDropdownOpen && "mr-2"
                       )}
                     >
                       <AvatarImage
@@ -367,8 +362,8 @@ export default function Home() {
                     <motion.div
                       initial={{ width: 0, opacity: 0 }}
                       animate={{
-                        width: isProfileHovered || isDropdownOpen ? "auto" : 0,
-                        opacity: isProfileHovered || isDropdownOpen ? 1 : 0,
+                        width: isDropdownOpen ? "auto" : 0,
+                        opacity: isDropdownOpen ? 1 : 0,
                       }}
                       transition={{ duration: 0.2 }}
                       className="flex items-center whitespace-nowrap overflow-hidden"
