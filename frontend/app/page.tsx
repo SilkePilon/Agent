@@ -20,6 +20,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Card,
@@ -304,95 +305,12 @@ export default function Home() {
             <DialogContent className="max-w-md z-50">
               <DialogHeader>
                 <DialogTitle>Upgrade your plan</DialogTitle>
+                <DialogDescription>
+                  Choose a plan and complete your payment securely.
+                </DialogDescription>
               </DialogHeader>
-              <div className="flex flex-col gap-4">
-                {/* Free Plan Card */}
-                <Card className="border-2 rounded-md">
-                  <CardHead>
-                    <CardTitle className="flex items-center gap-2">
-                      Free
-                      <Badge variant="outline">25 messages/day</Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      Basic access for personal use.
-                    </CardDescription>
-                  </CardHead>
-                  <CardContent>
-                    <ul className="text-sm list-disc pl-4 text-muted-foreground">
-                      <li>25 messages per day</li>
-                      <li>Basic support</li>
-                    </ul>
-                  </CardContent>
-                  <CardFooter>
-                    {has && !has({ plan: "pro" }) ? (
-                      <Badge className="bg-muted text-muted-foreground">
-                        Current Plan
-                      </Badge>
-                    ) : (
-                      <Button variant="outline" size="sm" disabled>
-                        Current Plan
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-                {/* Pro Plan Card */}
-                <Card className="border-2 rounded-md">
-                  <CardHead>
-                    <CardTitle className="flex items-center gap-2">
-                      Pro
-                      <Badge>50 messages/day</Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      For power users and professionals.
-                    </CardDescription>
-                  </CardHead>
-                  <CardContent>
-                    <ul className="text-sm list-disc pl-4 text-muted-foreground">
-                      <li>50 messages per day</li>
-                      <li>Priority support</li>
-                    </ul>
-                  </CardContent>
-                  <CardFooter>
-                    {has && has({ plan: "pro" }) ? (
-                      <Badge className="bg-muted text-muted-foreground">
-                        Current Plan
-                      </Badge>
-                    ) : (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        disabled={subscribing}
-                        onClick={async () => {
-                          setSubscribing(true);
-                          try {
-                            const res = await fetch(
-                              "/api/create-billing-portal",
-                              { method: "POST" }
-                            );
-                            if (!res.ok)
-                              throw new Error(
-                                "Failed to create billing portal session"
-                              );
-                            const data = await res.json();
-                            if (data.url) {
-                              window.location.href = data.url;
-                            } else {
-                              throw new Error("No billing portal URL returned");
-                            }
-                          } catch (err) {
-                            alert(
-                              "Failed to open billing portal. Please try again later."
-                            );
-                          } finally {
-                            setSubscribing(false);
-                          }
-                        }}
-                      >
-                        {subscribing ? "Redirecting..." : "Subscribe"}
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
+              <div className="py-2">
+                <PricingTable />
               </div>
             </DialogContent>
           </Dialog>
